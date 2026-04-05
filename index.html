@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinBot — Perencana Keuangan Cerdas di WhatsApp</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0d0f;
+    --bg2: #0f1317;
+    --surface: #141a1f;
+    --border: rgba(255,255,255,0.07);
+    --gold: #c9a84c;
+    --gold2: #e8c97a;
+    --gold-dim: rgba(201,168,76,0.15);
+    --green: #2ecc8a;
+    --text: #e8e4dc;
+    --muted: #6b7280;
+    --accent: #1a4a3a;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed; width: 10px; height: 10px;
+    background: var(--gold); border-radius: 50%;
+    pointer-events: none; z-index: 9999;
+    transition: transform 0.1s ease;
+    mix-blend-mode: difference;
+  }
+  .cursor-ring {
+    position: fixed; width: 36px; height: 36px;
+    border: 1px solid var(--gold); border-radius: 50%;
+    pointer-events: none; z-index: 9998;
+    transition: transform 0.15s ease, width 0.2s, height 0.2s, opacity 0.2s;
+    transform: translate(-50%, -50%);
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 1.5rem 5%;
+    display: flex; align-items: center; justify-content: space-between;
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,13,15,0.8);
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 0.75rem;
+    text-decoration: none;
+  }
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem; color: #0a0d0f; font-weight: 500;
+  }
+  .logo-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem; font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+  .logo-text span { color: var(--gold); }
+
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    color: var(--muted); text-decoration: none;
+    font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-cta {
+    background: var(--gold); color: #0a0d0f;
+    padding: 0.6rem 1.5rem; border-radius: 4px;
+    text-decoration: none; font-size: 0.85rem; font-weight: 700;
+    letter-spacing: 0.05em; transition: background 0.2s, transform 0.2s;
+  }
+  .nav-cta:hover { background: var(--gold2); transform: translateY(-1px); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; align-items: center;
+    padding: 10rem 5% 6rem;
+    position: relative; overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0; pointer-events: none;
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+  }
+  .hero-glow {
+    position: absolute;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    animation: pulse 4s ease-in-out infinite;
+  }
+  .hero-glow-2 {
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(46,204,138,0.06) 0%, transparent 70%);
+    bottom: 10%; right: 10%;
+    animation: pulse 6s ease-in-out infinite reverse;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.6; }
+  }
+
+  .hero-content { position: relative; max-width: 720px; }
+
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--gold-dim); border: 1px solid rgba(201,168,76,0.3);
+    padding: 0.4rem 1rem; border-radius: 100px;
+    font-family: 'DM Mono', monospace; font-size: 0.72rem;
+    color: var(--gold); letter-spacing: 0.1em;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s ease both;
+  }
+  .badge-dot {
+    width: 6px; height: 6px; background: var(--green);
+    border-radius: 50%; animation: blink 1.5s infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3.5rem, 8vw, 6.5rem);
+    font-weight: 300; line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+  .hero h1 em { font-style: italic; color: var(--gold); }
+  .hero h1 .outline {
+    -webkit-text-stroke: 1px rgba(255,255,255,0.3);
+    color: transparent;
+  }
+
+  .hero-sub {
+    font-size: 1.05rem; color: var(--muted); line-height: 1.75;
+    max-width: 500px; margin-bottom: 3rem;
+    font-family: 'DM Mono', monospace; font-weight: 300;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .hero-actions {
+    display: flex; align-items: center; gap: 1.5rem;
+    flex-wrap: wrap;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 0.75rem;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    color: #0a0d0f; padding: 1rem 2rem;
+    border-radius: 4px; text-decoration: none;
+    font-weight: 700; font-size: 0.9rem; letter-spacing: 0.05em;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 40px rgba(201,168,76,0.2);
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 60px rgba(201,168,76,0.3);
+  }
+  .btn-primary svg { width: 20px; height: 20px; }
+
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    color: var(--text); text-decoration: none;
+    font-size: 0.9rem; letter-spacing: 0.03em;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2px; transition: border-color 0.2s, gap 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--gold); gap: 0.75rem; }
+
+  .hero-stats {
+    display: flex; gap: 3rem; margin-top: 5rem;
+    padding-top: 3rem; border-top: 1px solid var(--border);
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+  .stat-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.5rem; font-weight: 600; color: var(--gold);
+    line-height: 1;
+  }
+  .stat-label {
+    font-family: 'DM Mono', monospace; font-size: 0.72rem;
+    color: var(--muted); letter-spacing: 0.08em; margin-top: 0.25rem;
+  }
+
+  /* Floating phone mockup */
+  .hero-visual {
+    position: absolute; right: 5%; top: 50%; transform: translateY(-50%);
+    width: min(340px, 35vw);
+    animation: float 4s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(-50%) translateY(0); }
+    50% { transform: translateY(-50%) translateY(-16px); }
+  }
+
+  .phone-frame {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 36px;
+    overflow: hidden;
+    box-shadow: 0 60px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+    padding: 0;
+  }
+  .phone-header {
+    background: #075E54;
+    padding: 1rem 1.2rem 0.8rem;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .phone-avatar {
+    width: 36px; height: 36px; background: var(--gold);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+  }
+  .phone-name { font-size: 0.9rem; font-weight: 600; }
+  .phone-status { font-size: 0.7rem; color: rgba(255,255,255,0.6); }
+
+  .phone-body { padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; background: #0b141a; }
+
+  .chat-msg {
+    max-width: 85%; font-size: 0.78rem; line-height: 1.5;
+    padding: 0.6rem 0.9rem; border-radius: 12px;
+  }
+  .chat-msg.bot {
+    background: #1f2c34; align-self: flex-start;
+    border-bottom-left-radius: 4px; color: #e8e4dc;
+  }
+  .chat-msg.user {
+    background: #005c4b; align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .chat-time { font-size: 0.6rem; color: rgba(255,255,255,0.4); margin-top: 2px; text-align: right; }
+
+  .chat-card {
+    background: #1f2c34; border-radius: 12px; border-bottom-left-radius: 4px;
+    padding: 0.75rem; margin-top: -0.25rem; max-width: 90%;
+  }
+  .chat-card-title { font-size: 0.65rem; color: var(--gold); letter-spacing: 0.06em; margin-bottom: 0.5rem; }
+  .chat-card-row { display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 0.25rem; color: var(--muted); }
+  .chat-card-row span:last-child { color: var(--green); font-family: 'DM Mono', monospace; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* FEATURES */
+  .section { padding: 8rem 5%; }
+  .section-label {
+    font-family: 'DM Mono', monospace; font-size: 0.72rem;
+    color: var(--gold); letter-spacing: 0.15em; text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 300; line-height: 1.1;
+    margin-bottom: 1.5rem;
+  }
+  .section-title em { font-style: italic; color: var(--gold); }
+
+  .features-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5px;
+    background: var(--border); margin-top: 5rem;
+    border: 1px solid var(--border);
+  }
+
+  .feature-card {
+    background: var(--bg); padding: 2.5rem;
+    transition: background 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .feature-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.3s;
+  }
+  .feature-card:hover { background: var(--surface); }
+  .feature-card:hover::before { transform: scaleX(1); }
+
+  .feature-num {
+    font-family: 'DM Mono', monospace; font-size: 0.65rem;
+    color: var(--muted); letter-spacing: 0.1em; margin-bottom: 1.5rem;
+  }
+  .feature-icon {
+    width: 48px; height: 48px;
+    background: var(--gold-dim); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.5rem; font-size: 1.4rem;
+  }
+  .feature-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem; font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+  .feature-desc { color: var(--muted); font-size: 0.85rem; line-height: 1.7; font-family: 'DM Mono', monospace; font-weight: 300; }
+
+  /* HOW IT WORKS */
+  .how-section { padding: 8rem 5%; background: var(--bg2); }
+  .how-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: center; margin-top: 5rem; }
+
+  .how-steps { display: flex; flex-direction: column; gap: 0; }
+  .how-step {
+    display: flex; gap: 1.5rem;
+    padding: 2rem 0; border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .how-step:first-child { padding-top: 0; }
+  .how-step-num {
+    font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    color: var(--gold); min-width: 28px; padding-top: 2px;
+  }
+  .how-step-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem; font-weight: 600; margin-bottom: 0.4rem;
+  }
+  .how-step-desc { color: var(--muted); font-size: 0.82rem; line-height: 1.65; font-family: 'DM Mono', monospace; font-weight: 300; }
+
+  .how-visual {
+    position: relative; aspect-ratio: 0.8;
+    background: var(--surface); border-radius: 24px;
+    border: 1px solid var(--border); overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+
+  .dashboard-preview {
+    padding: 1.5rem;
+    display: flex; flex-direction: column; gap: 1rem; height: 100%;
+  }
+  .dp-header { display: flex; justify-content: space-between; align-items: center; }
+  .dp-title { font-family: 'Cormorant Garamond', serif; font-size: 1rem; }
+  .dp-badge { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--green); background: rgba(46,204,138,0.1); padding: 0.2rem 0.6rem; border-radius: 100px; }
+
+  .dp-balance {
+    background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05));
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 16px; padding: 1.2rem;
+  }
+  .dp-balance-label { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); letter-spacing: 0.08em; }
+  .dp-balance-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem; color: var(--gold); margin-top: 0.25rem;
+  }
+
+  .dp-chart { flex: 1; position: relative; }
+  .chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 80px; }
+  .bar { flex: 1; border-radius: 3px 3px 0 0; transition: height 0.5s ease; }
+  .bar.income { background: var(--green); opacity: 0.8; }
+  .bar.expense { background: var(--gold); opacity: 0.6; }
+
+  .dp-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .dp-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.6rem 0.75rem; background: rgba(255,255,255,0.03);
+    border-radius: 8px; font-size: 0.72rem;
+  }
+  .dp-item-left { display: flex; align-items: center; gap: 0.6rem; color: var(--muted); }
+  .dp-item-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .dp-item-amount { font-family: 'DM Mono', monospace; font-size: 0.7rem; }
+  .dp-item-amount.neg { color: #ef4444; }
+  .dp-item-amount.pos { color: var(--green); }
+
+  /* PRICING */
+  .pricing-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 1.5rem; margin-top: 4rem; max-width: 420px; }
+
+  .pricing-card {
+    border: 1px solid var(--border); border-radius: 16px;
+    padding: 2.5rem; position: relative; overflow: hidden;
+    transition: transform 0.3s, border-color 0.3s;
+  }
+  .pricing-card:hover { transform: translateY(-4px); }
+  .pricing-card.featured {
+    border-color: var(--gold); background: linear-gradient(135deg, rgba(201,168,76,0.06), transparent);
+  }
+  .featured-badge {
+    position: absolute; top: 1.5rem; right: 1.5rem;
+    background: var(--gold); color: #0a0d0f;
+    font-size: 0.65rem; font-weight: 700; padding: 0.25rem 0.75rem;
+    border-radius: 100px; letter-spacing: 0.08em;
+  }
+  .pricing-tier { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 1.5rem; }
+  .pricing-price { font-family: 'Cormorant Garamond', serif; font-size: 3rem; font-weight: 600; line-height: 1; }
+  .pricing-price sup { font-size: 1.2rem; vertical-align: super; color: var(--muted); }
+  .pricing-period { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); margin-top: 0.25rem; }
+  .pricing-divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+  .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem; }
+  .pricing-features li { display: flex; align-items: center; gap: 0.6rem; font-size: 0.82rem; color: var(--muted); font-family: 'DM Mono', monospace; font-weight: 300; }
+  .pricing-features li::before { content: '✓'; color: var(--green); font-size: 0.9rem; }
+  .pricing-features li.dimmed { opacity: 0.4; }
+  .pricing-features li.dimmed::before { content: '×'; color: var(--muted); }
+
+  .btn-outline {
+    display: block; text-align: center;
+    border: 1px solid var(--border); color: var(--text);
+    padding: 0.8rem; border-radius: 6px; text-decoration: none;
+    font-size: 0.85rem; font-weight: 600; letter-spacing: 0.05em;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .btn-outline:hover { border-color: var(--gold); background: var(--gold-dim); }
+  .btn-filled {
+    display: block; text-align: center;
+    background: linear-gradient(135deg, var(--gold), var(--gold2));
+    color: #0a0d0f; padding: 0.8rem; border-radius: 6px;
+    text-decoration: none; font-size: 0.85rem; font-weight: 700;
+    letter-spacing: 0.05em; transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-filled:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(201,168,76,0.3); }
+
+  /* TESTIMONIALS */
+  .testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 4rem; }
+  .testi-card {
+    border: 1px solid var(--border); border-radius: 12px; padding: 2rem;
+    background: var(--surface); transition: border-color 0.3s;
+  }
+  .testi-card:hover { border-color: rgba(201,168,76,0.3); }
+  .testi-quote { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-style: italic; line-height: 1.7; margin-bottom: 1.5rem; color: var(--text); }
+  .testi-stars { color: var(--gold); font-size: 0.8rem; margin-bottom: 1.5rem; }
+  .testi-author { display: flex; align-items: center; gap: 0.75rem; }
+  .testi-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+  .testi-name { font-size: 0.85rem; font-weight: 600; }
+  .testi-role { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--muted); }
+
+  /* CTA SECTION */
+  .cta-section {
+    margin: 4rem 5% 6rem;
+    background: linear-gradient(135deg, rgba(201,168,76,0.1), rgba(46,204,138,0.05));
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 24px; padding: 6rem 4rem;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .cta-section::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 60% at 50% 0%, rgba(201,168,76,0.1), transparent);
+  }
+  .cta-section > * { position: relative; }
+  .cta-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 300;
+    margin-bottom: 1rem;
+  }
+  .cta-title em { font-style: italic; color: var(--gold); }
+  .cta-sub { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 0.85rem; margin-bottom: 3rem; }
+  .cta-actions { display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border); padding: 3rem 5%;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+  .footer-copy { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+  .footer-links { display: flex; gap: 2rem; }
+  .footer-links a { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--text); }
+
+  @media (max-width: 900px) {
+    .hero-visual { display: none; }
+    .features-grid { grid-template-columns: 1fr; }
+    .how-grid { grid-template-columns: 1fr; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    .testi-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 1.5rem; }
+    nav .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-mark">₿</div>
+    <span class="logo-text">Fin<span>Bot</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#fitur">Fitur</a></li>
+    <li><a href="#cara-kerja">Cara Kerja</a></li>
+    <li><a href="#harga">Harga</a></li>
+    <li><a href="#testimoni">Testimoni</a></li>
+  </ul>
+  <a href="#harga" class="nav-cta">Coba Sekarang</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-glow-2"></div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-badge">
+      <div class="badge-dot"></div>
+      AI Financial Planner via WhatsApp
+    </div>
+
+    <h1>
+      Kelola Keuangan<br>
+      <em>Lebih Cerdas</em><br>
+      <span class="outline">Langsung di WA</span>
+    </h1>
+
+    <p class="hero-sub">
+      Catat pemasukan, lacak pengeluaran, dan terima analisis keuangan personal — semua cukup lewat chat WhatsApp. Tidak perlu aplikasi baru.
+    </p>
+
+    <div class="hero-actions">
+      <a href="#cara-kerja" class="btn-secondary">
+        Lihat cara kerja →
+      </a>
+    </div>
+
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">1K+</div>
+        <div class="stat-label">Pengguna Aktif</div>
+      </div>
+      <div>
+        <div class="stat-num">Rp 2M</div>
+        <div class="stat-label">Rata-rata Hemat/Bulan</div>
+      </div>
+      <div>
+        <div class="stat-num">98%</div>
+        <div class="stat-label">Kepuasan Pengguna</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phone Mockup -->
+  <div class="hero-visual">
+    <div class="phone-frame">
+      <div class="phone-header">
+        <div class="phone-avatar">🤖</div>
+        <div>
+          <div class="phone-name">FinBot Assistant</div>
+          <div class="phone-status">● Online</div>
+        </div>
+      </div>
+      <div class="phone-body">
+        <div class="chat-msg bot">
+          Halo! Saya FinBot 👋 Mau catat transaksi atau cek ringkasan keuangan hari ini?
+          <div class="chat-time">09:14</div>
+        </div>
+        <div class="chat-msg user">
+          Catat: makan siang 45rb
+          <div class="chat-time">09:15</div>
+        </div>
+        <div class="chat-msg bot">
+          ✅ Tercatat! Pengeluaran makan siang Rp45.000
+          <div class="chat-time">09:15</div>
+        </div>
+        <div class="chat-card">
+          <div class="chat-card-title">RINGKASAN HARI INI</div>
+          <div class="chat-card-row"><span>Pemasukan</span><span>+Rp 3.500.000</span></div>
+          <div class="chat-card-row"><span>Pengeluaran</span><span style="color:#ef4444">-Rp 287.000</span></div>
+          <div class="chat-card-row"><span>Sisa Budget</span><span>Rp 3.213.000</span></div>
+        </div>
+        <div class="chat-msg user">
+          Berapa total belanja bulan ini?
+          <div class="chat-time">09:16</div>
+        </div>
+        <div class="chat-msg bot">
+          Belanja bulan ini: <strong>Rp 1.845.000</strong> (62% dari budget Rp 3jt) 📊
+          <div class="chat-time">09:16</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="fitur">
+  <div class="section-label">Fitur Unggulan</div>
+  <div class="section-title">
+    Semua yang Anda butuhkan<br>untuk <em>kendali finansial</em>
+  </div>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-num">01</div>
+      <div class="feature-icon">💬</div>
+      <div class="feature-title">Catat via Chat Natural</div>
+      <p class="feature-desc">Cukup ketik "makan siang 45rb" atau "gaji masuk 5 juta". FinBot memahami bahasa sehari-hari dan mencatat otomatis.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-num">02</div>
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">Dashboard Real-time</div>
+      <p class="feature-desc">Akses visualisasi data keuangan Anda kapan saja melalui dashboard web yang selalu sinkron dengan chat bot.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-num">03</div>
+      <div class="feature-icon">🎯</div>
+      <div class="feature-title">Target & Anggaran</div>
+      <p class="feature-desc">Set target tabungan dan anggaran per kategori. FinBot akan mengingatkan Anda saat mendekati batas.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-num">04</div>
+      <div class="feature-icon">🔔</div>
+      <div class="feature-title">Pengingat Otomatis</div>
+      <p class="feature-desc">Notifikasi tagihan, rekap mingguan, dan saran penghematan langsung ke WhatsApp Anda.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-num">05</div>
+      <div class="feature-icon">🤖</div>
+      <div class="feature-title">Analisis AI Cerdas</div>
+      <p class="feature-desc">AI menganalisis pola belanja dan memberikan rekomendasi personal untuk meningkatkan kesehatan finansial Anda.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-num">06</div>
+      <div class="feature-icon">📤</div>
+      <div class="feature-title">Ekspor Laporan</div>
+      <p class="feature-desc">Unduh laporan keuangan bulanan dalam format PDF atau Excel untuk keperluan pribadi atau akuntansi.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="cara-kerja">
+  <div style="max-width: 1200px; margin: 0 auto;">
+    <div class="section-label">Cara Kerja</div>
+    <div class="section-title">Mulai dalam <em>3 langkah</em> mudah</div>
+
+    <div class="how-grid">
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="how-step-num">01</div>
+          <div>
+            <div class="how-step-title">Daftar & Hubungkan WhatsApp</div>
+            <p class="how-step-desc">Pilih paket, daftar akun, dan simpan nomor FinBot di kontak WhatsApp Anda. Proses hanya butuh 2 menit.</p>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">02</div>
+          <div>
+            <div class="how-step-title">Mulai Catat Transaksi</div>
+            <p class="how-step-desc">Chat seperti biasa. Ketik transaksi kapan saja — FinBot memproses dan menyimpan semua data secara otomatis.</p>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-step-num">03</div>
+          <div>
+            <div class="how-step-title">Akses Dashboard & Analisis</div>
+            <p class="how-step-desc">Login ke dashboard web untuk melihat grafik, laporan, dan insight keuangan Anda yang selalu terkini.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Preview -->
+      <div class="how-visual">
+        <div class="dashboard-preview">
+          <div class="dp-header">
+            <div class="dp-title">Dashboard Saya</div>
+            <div class="dp-badge">● Sinkron</div>
+          </div>
+          <div class="dp-balance">
+            <div class="dp-balance-label">TOTAL SALDO BERSIH</div>
+            <div class="dp-balance-num">Rp 8.420.000</div>
+          </div>
+          <div class="dp-chart">
+            <div style="font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); margin-bottom: 0.5rem;">PEMASUKAN vs PENGELUARAN</div>
+            <div class="chart-bars">
+              <div class="bar income" style="height:55px"></div>
+              <div class="bar expense" style="height:30px"></div>
+              <div class="bar income" style="height:65px"></div>
+              <div class="bar expense" style="height:40px"></div>
+              <div class="bar income" style="height:50px"></div>
+              <div class="bar expense" style="height:35px"></div>
+              <div class="bar income" style="height:75px"></div>
+              <div class="bar expense" style="height:45px"></div>
+            </div>
+          </div>
+          <div class="dp-list">
+            <div style="font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); margin-bottom: 0.25rem;">TRANSAKSI TERBARU</div>
+            <div class="dp-item">
+              <div class="dp-item-left"><div class="dp-item-dot" style="background:#ef4444"></div>Makan Siang</div>
+              <div class="dp-item-amount neg">-Rp 45.000</div>
+            </div>
+            <div class="dp-item">
+              <div class="dp-item-left"><div class="dp-item-dot" style="background:var(--green)"></div>Transfer Masuk</div>
+              <div class="dp-item-amount pos">+Rp 2.000.000</div>
+            </div>
+            <div class="dp-item">
+              <div class="dp-item-left"><div class="dp-item-dot" style="background:#f59e0b"></div>Transportasi</div>
+              <div class="dp-item-amount neg">-Rp 25.000</div>
+            </div>
+            <div class="dp-item">
+              <div class="dp-item-left"><div class="dp-item-dot" style="background:#8b5cf6"></div>Belanja Online</div>
+              <div class="dp-item-amount neg">-Rp 320.000</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD DEMO -->
+<section class="section" id="dashboard-demo" style="background: var(--bg2); padding-top: 6rem; padding-bottom: 6rem;">
+  <div style="max-width: 1200px; margin: 0 auto;">
+    <div class="section-label">Contoh Dashboard</div>
+    <div class="section-title">Pantau keuangan Anda secara <em>real-time</em></div>
+    <p style="color: var(--muted); font-family: 'DM Mono', monospace; font-size: 0.85rem; margin-top: 1rem; max-width: 520px; line-height: 1.75;">Berikut tampilan dashboard FinBot yang akan Anda gunakan — bersih, intuitif, dan penuh insight.</p>
+
+    <!-- Dashboard Mock UI -->
+    <div style="margin-top: 4rem; background: #0f1317; border: 1px solid rgba(201,168,76,0.2); border-radius: 20px; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.6);">
+      
+      <!-- Browser Bar -->
+      <div style="background: #141a1f; padding: 0.75rem 1.25rem; display: flex; align-items: center; gap: 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
+        <div style="width:10px;height:10px;border-radius:50%;background:#ef4444;opacity:0.8;"></div>
+        <div style="width:10px;height:10px;border-radius:50%;background:#f59e0b;opacity:0.8;"></div>
+        <div style="width:10px;height:10px;border-radius:50%;background:#2ecc8a;opacity:0.8;"></div>
+        <div style="background: rgba(255,255,255,0.05); border-radius: 6px; padding: 0.3rem 1rem; font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--muted); margin-left: 0.5rem; flex: 1; max-width: 300px;">app.finbot.id/dashboard</div>
+      </div>
+
+      <!-- Dashboard Content -->
+      <div style="display: grid; grid-template-columns: 220px 1fr; min-height: 520px;">
+        
+        <!-- Sidebar -->
+        <div style="background: #0a0d0f; border-right: 1px solid rgba(255,255,255,0.05); padding: 1.5rem 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2rem; padding: 0 0.5rem;">
+            <div style="width:28px;height:28px;background:linear-gradient(135deg,#c9a84c,#e8c97a);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:#0a0d0f;font-weight:700;">₿</div>
+            <span style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;">Fin<span style="color:#c9a84c;">Bot</span></span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.25rem;">
+            <div style="display:flex;align-items:center;gap:0.65rem;padding:0.6rem 0.75rem;border-radius:8px;background:rgba(201,168,76,0.12);color:#c9a84c;font-size:0.78rem;font-family:'DM Mono',monospace;">
+              <span>📊</span> Dashboard
+            </div>
+            <div style="display:flex;align-items:center;gap:0.65rem;padding:0.6rem 0.75rem;border-radius:8px;color:var(--muted);font-size:0.78rem;font-family:'DM Mono',monospace;">
+              <span>📝</span> Transaksi
+            </div>
+            <div style="display:flex;align-items:center;gap:0.65rem;padding:0.6rem 0.75rem;border-radius:8px;color:var(--muted);font-size:0.78rem;font-family:'DM Mono',monospace;">
+              <span>🎯</span> Anggaran
+            </div>
+            <div style="display:flex;align-items:center;gap:0.65rem;padding:0.6rem 0.75rem;border-radius:8px;color:var(--muted);font-size:0.78rem;font-family:'DM Mono',monospace;">
+              <span>📈</span> Laporan
+            </div>
+            <div style="display:flex;align-items:center;gap:0.65rem;padding:0.6rem 0.75rem;border-radius:8px;color:var(--muted);font-size:0.78rem;font-family:'DM Mono',monospace;">
+              <span>🤖</span> Analisis AI
+            </div>
+            <div style="display:flex;align-items:center;gap:0.65rem;padding:0.6rem 0.75rem;border-radius:8px;color:var(--muted);font-size:0.78rem;font-family:'DM Mono',monospace;">
+              <span>⚙️</span> Pengaturan
+            </div>
+          </div>
+          <div style="margin-top: auto; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 3rem;">
+            <div style="display:flex;align-items:center;gap:0.6rem;">
+              <div style="width:30px;height:30px;border-radius:50%;background:rgba(201,168,76,0.2);display:flex;align-items:center;justify-content:center;font-size:0.85rem;">👤</div>
+              <div>
+                <div style="font-size:0.72rem;color:var(--text);">Budi Santoso</div>
+                <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:#2ecc8a;">● PRO Lifetime</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div style="padding: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem; overflow: hidden;">
+          
+          <!-- Top bar -->
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;">Selamat pagi, Budi! 👋</div>
+              <div style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);">Sabtu, 4 April 2026</div>
+            </div>
+            <div style="display:flex;gap:0.6rem;">
+              <div style="background:rgba(46,204,138,0.1);border:1px solid rgba(46,204,138,0.2);border-radius:8px;padding:0.4rem 0.85rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:#2ecc8a;">● Sinkron WA</div>
+              <div style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:0.4rem 0.85rem;font-family:'DM Mono',monospace;font-size:0.65rem;color:#c9a84c;">📤 Ekspor</div>
+            </div>
+          </div>
+
+          <!-- KPI Cards -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.85rem;">
+            <div style="background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.04));border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:1rem;">
+              <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--muted);letter-spacing:0.08em;margin-bottom:0.4rem;">SALDO BERSIH</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:#c9a84c;">Rp 8,42jt</div>
+              <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:#2ecc8a;margin-top:0.2rem;">↑ +12% bulan ini</div>
+            </div>
+            <div style="background:rgba(46,204,138,0.06);border:1px solid rgba(46,204,138,0.15);border-radius:12px;padding:1rem;">
+              <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--muted);letter-spacing:0.08em;margin-bottom:0.4rem;">PEMASUKAN BULAN INI</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:#2ecc8a;">Rp 12,5jt</div>
+              <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);margin-top:0.2rem;">3 sumber pemasukan</div>
+            </div>
+            <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);border-radius:12px;padding:1rem;">
+              <div style="font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--muted);letter-spacing:0.08em;margin-bottom:0.4rem;">PENGELUARAN BULAN INI</div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:#ef4444;">Rp 4,08jt</div>
+              <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:#2ecc8a;margin-top:0.2rem;">↓ hemat Rp 820rb</div>
+            </div>
+          </div>
+
+          <!-- Chart + Transactions -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;flex:1;">
+            
+            <!-- Chart -->
+            <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:1.1rem;">
+              <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;margin-bottom:1rem;">PEMASUKAN vs PENGELUARAN (6 BLN)</div>
+              <div style="display:flex;align-items:flex-end;gap:6px;height:90px;padding-bottom:0.5rem;border-bottom:1px solid rgba(255,255,255,0.05);">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+                  <div style="width:100%;height:55px;background:#2ecc8a;opacity:0.75;border-radius:3px 3px 0 0;"></div>
+                  <div style="width:100%;height:28px;background:#c9a84c;opacity:0.6;border-radius:3px 3px 0 0;"></div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+                  <div style="width:100%;height:62px;background:#2ecc8a;opacity:0.75;border-radius:3px 3px 0 0;"></div>
+                  <div style="width:100%;height:35px;background:#c9a84c;opacity:0.6;border-radius:3px 3px 0 0;"></div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+                  <div style="width:100%;height:48px;background:#2ecc8a;opacity:0.75;border-radius:3px 3px 0 0;"></div>
+                  <div style="width:100%;height:40px;background:#c9a84c;opacity:0.6;border-radius:3px 3px 0 0;"></div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+                  <div style="width:100%;height:70px;background:#2ecc8a;opacity:0.75;border-radius:3px 3px 0 0;"></div>
+                  <div style="width:100%;height:30px;background:#c9a84c;opacity:0.6;border-radius:3px 3px 0 0;"></div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+                  <div style="width:100%;height:58px;background:#2ecc8a;opacity:0.75;border-radius:3px 3px 0 0;"></div>
+                  <div style="width:100%;height:33px;background:#c9a84c;opacity:0.6;border-radius:3px 3px 0 0;"></div>
+                </div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+                  <div style="width:100%;height:80px;background:#2ecc8a;opacity:0.75;border-radius:3px 3px 0 0;"></div>
+                  <div style="width:100%;height:25px;background:#c9a84c;opacity:0.6;border-radius:3px 3px 0 0;"></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:1rem;margin-top:0.6rem;">
+                <div style="display:flex;align-items:center;gap:0.3rem;font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--muted);"><div style="width:8px;height:8px;background:#2ecc8a;border-radius:2px;opacity:0.75;"></div>Pemasukan</div>
+                <div style="display:flex;align-items:center;gap:0.3rem;font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--muted);"><div style="width:8px;height:8px;background:#c9a84c;border-radius:2px;opacity:0.6;"></div>Pengeluaran</div>
+              </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:1.1rem;">
+              <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);letter-spacing:0.08em;margin-bottom:0.85rem;">TRANSAKSI TERBARU</div>
+              <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:0.55rem 0.7rem;background:rgba(255,255,255,0.03);border-radius:8px;">
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div style="width:28px;height:28px;border-radius:8px;background:rgba(46,204,138,0.15);display:flex;align-items:center;justify-content:center;font-size:0.85rem;">💰</div>
+                    <div><div style="font-size:0.72rem;">Gaji Bulanan</div><div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--muted);">01 Apr</div></div>
+                  </div>
+                  <div style="font-family:'DM Mono',monospace;font-size:0.72rem;color:#2ecc8a;">+Rp 8jt</div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:0.55rem 0.7rem;background:rgba(255,255,255,0.03);border-radius:8px;">
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div style="width:28px;height:28px;border-radius:8px;background:rgba(239,68,68,0.12);display:flex;align-items:center;justify-content:center;font-size:0.85rem;">🛒</div>
+                    <div><div style="font-size:0.72rem;">Belanja Groceries</div><div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--muted);">03 Apr</div></div>
+                  </div>
+                  <div style="font-family:'DM Mono',monospace;font-size:0.72rem;color:#ef4444;">-Rp 320rb</div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:0.55rem 0.7rem;background:rgba(255,255,255,0.03);border-radius:8px;">
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div style="width:28px;height:28px;border-radius:8px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;font-size:0.85rem;">🍜</div>
+                    <div><div style="font-size:0.72rem;">Makan Siang</div><div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--muted);">04 Apr</div></div>
+                  </div>
+                  <div style="font-family:'DM Mono',monospace;font-size:0.72rem;color:#ef4444;">-Rp 45rb</div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:0.55rem 0.7rem;background:rgba(255,255,255,0.03);border-radius:8px;">
+                  <div style="display:flex;align-items:center;gap:0.6rem;">
+                    <div style="width:28px;height:28px;border-radius:8px;background:rgba(139,92,246,0.12);display:flex;align-items:center;justify-content:center;font-size:0.85rem;">🚗</div>
+                    <div><div style="font-size:0.72rem;">Transportasi</div><div style="font-family:'DM Mono',monospace;font-size:0.58rem;color:var(--muted);">04 Apr</div></div>
+                  </div>
+                  <div style="font-family:'DM Mono',monospace;font-size:0.72rem;color:#ef4444;">-Rp 25rb</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Insight Banner -->
+          <div style="background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(46,204,138,0.05));border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;gap:1rem;">
+            <div style="font-size:1.5rem;flex-shrink:0;">🤖</div>
+            <div>
+              <div style="font-family:'DM Mono',monospace;font-size:0.62rem;color:#c9a84c;letter-spacing:0.08em;margin-bottom:0.2rem;">INSIGHT AI MINGGU INI</div>
+              <div style="font-size:0.78rem;color:var(--text);line-height:1.5;">Pengeluaran makan Anda turun 18% dibanding bulan lalu. Hemat tambahan <strong style="color:#2ecc8a;">Rp 240.000</strong> jika tren ini berlanjut. Tetap pertahankan! 🎉</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section" id="harga">
+  <div class="section-label">Harga</div>
+  <div class="section-title">Investasi kecil untuk <em>masa depan finansial</em></div>
+
+  <div class="pricing-grid">
+    <div class="pricing-card featured">
+      <div class="featured-badge">TERPOPULER</div>
+      <div class="pricing-tier">PRO</div>
+      <div class="pricing-price"><sup>Rp</sup>150K</div>
+      <div class="pricing-period">akses lifetime selamanya</div>
+      <hr class="pricing-divider">
+      <ul class="pricing-features">
+        <li>Transaksi tak terbatas</li>
+        <li>Ringkasan harian & mingguan</li>
+        <li>Kategori budget tak terbatas</li>
+        <li>Dashboard web lengkap</li>
+        <li>Analisis AI & saran hemat</li>
+        <li>Ekspor PDF & Excel</li>
+      </ul>
+      <a href="#" class="btn-filled" onclick="openPayment(); return false;">Dapatkan Sekarang</a>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="section" id="testimoni" style="padding-top: 0;">
+  <div class="section-label">Testimoni</div>
+  <div class="section-title">Dipercaya oleh <em>ribuan pengguna</em></div>
+
+  <div class="testi-grid">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote">"Akhirnya ada solusi yang tidak ribet. Tinggal chat di WA, semua langsung tercatat. Bulan pertama pakai FinBot, saya hemat 1.2 juta!"</p>
+      <div class="testi-author">
+        <div class="testi-avatar" style="background: rgba(201,168,76,0.2);">👩</div>
+        <div>
+          <div class="testi-name">Anindita R.</div>
+          <div class="testi-role">Marketing Manager, Jakarta</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote">"Sebagai freelancer, saya sering lupa catat pengeluaran. FinBot mengubah kebiasaan saya. Dashboard-nya jelas banget dan mudah dipahami."</p>
+      <div class="testi-author">
+        <div class="testi-avatar" style="background: rgba(46,204,138,0.2);">👨</div>
+        <div>
+          <div class="testi-name">Bagas S.</div>
+          <div class="testi-role">Desainer Freelance, Surabaya</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote">"Saya pakai untuk kebutuhan UMKM kecil-kecilan. Laporan bulanannya sangat membantu untuk evaluasi bisnis. Worth it banget!"</p>
+      <div class="testi-author">
+        <div class="testi-avatar" style="background: rgba(139,92,246,0.2);">👩</div>
+        <div>
+          <div class="testi-name">Mega P.</div>
+          <div class="testi-role">Pemilik Usaha, Malang</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote">"FinBot benar-benar game changer! Saya tidak lagi kaget di akhir bulan karena semua pengeluaran terpantau real-time. Sangat direkomendasikan!"</p>
+      <div class="testi-author">
+        <div class="testi-avatar" style="background: rgba(239,68,68,0.2);">👨</div>
+        <div>
+          <div class="testi-name">Rizky A.</div>
+          <div class="testi-role">Software Engineer, Bandung</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote">"Fitur analisis AI-nya keren banget. Langsung dikasih saran hemat yang relevan dengan pola belanja saya. Berasa punya konsultan keuangan pribadi!"</p>
+      <div class="testi-author">
+        <div class="testi-avatar" style="background: rgba(14,165,233,0.2);">👩</div>
+        <div>
+          <div class="testi-name">Dinda K.</div>
+          <div class="testi-role">Dokter Muda, Yogyakarta</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote">"Sudah 3 bulan pakai FinBot dan tabungan saya meningkat drastis. Interface WhatsApp-nya super intuitif, tidak perlu belajar aplikasi baru sama sekali."</p>
+      <div class="testi-author">
+        <div class="testi-avatar" style="background: rgba(234,179,8,0.2);">👨</div>
+        <div>
+          <div class="testi-name">Hendra W.</div>
+          <div class="testi-role">Pengusaha Muda, Medan</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote">"Sebagai ibu rumah tangga, saya butuh cara mudah kelola keuangan keluarga. FinBot jawaban yang saya cari — cepat, simpel, dan hasil laporannya rapi!"</p>
+      <div class="testi-author">
+        <div class="testi-avatar" style="background: rgba(20,184,166,0.2);">👩</div>
+        <div>
+          <div class="testi-name">Sari L.</div>
+          <div class="testi-role">Ibu Rumah Tangga, Semarang</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote">"Harga sangat terjangkau untuk fitur selengkap ini. Coba bandingkan dengan aplikasi lain yang jauh lebih mahal tapi fiturnya kalah. FinBot juaranya!"</p>
+      <div class="testi-author">
+        <div class="testi-avatar" style="background: rgba(168,85,247,0.2);">👨</div>
+        <div>
+          <div class="testi-name">Fajar M.</div>
+          <div class="testi-role">Content Creator, Denpasar</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-quote">"Fitur ekspor PDF-nya sangat berguna. Saya bisa kirim laporan keuangan ke akuntan dengan mudah. Hemat waktu dan energi yang luar biasa!"</p>
+      <div class="testi-author">
+        <div class="testi-avatar" style="background: rgba(245,158,11,0.2);">👩</div>
+        <div>
+          <div class="testi-name">Putri N.</div>
+          <div class="testi-role">Konsultan Pajak, Surabaya</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section">
+  <div class="section-label" style="justify-content: center; display: flex;">Siap Memulai?</div>
+  <h2 class="cta-title">Mulai kendalikan keuangan<br>Anda <em>hari ini</em></h2>
+  <div class="cta-actions">
+    <a href="#" class="btn-primary" onclick="openPayment(); return false;">
+      <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Coba Sekarang
+    </a>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="logo" style="margin-bottom: 0.5rem;">
+      <div class="logo-mark">₿</div>
+      <span class="logo-text">Fin<span>Bot</span></span>
+    </div>
+    <div class="footer-copy" style="margin-top: 0.5rem;">© 2026 FinBot. Hak cipta dilindungi.</div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 1rem;">
+    <a href="https://www.instagram.com/" target="_blank" aria-label="Instagram FinBot" style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); transition: background 0.2s, border-color 0.2s; text-decoration: none;" onmouseover="this.style.background='rgba(201,168,76,0.15)';this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.borderColor='rgba(255,255,255,0.1)'">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.5" fill="#c9a84c" stroke="none"/></svg>
+    </a>
+  </div>
+</footer>
+
+<!-- PAYMENT MODAL -->
+<div id="payment-modal" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); overflow-y:auto;">
+  <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem;">
+    <div style="background:#0f1317; border:1px solid rgba(201,168,76,0.25); border-radius:20px; width:100%; max-width:520px; padding:2.5rem; position:relative;">
+
+      <!-- Close button -->
+      <button onclick="closePayment()" style="position:absolute; top:1.25rem; right:1.25rem; background:rgba(255,255,255,0.06); border:none; color:#e8e4dc; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center;">✕</button>
+
+      <!-- Header -->
+      <div style="margin-bottom:2rem;">
+        <div style="font-family:'DM Mono',monospace; font-size:0.7rem; color:#c9a84c; letter-spacing:0.12em; margin-bottom:0.5rem;">PEMBAYARAN</div>
+        <div style="font-family:'Cormorant Garamond',serif; font-size:1.8rem; font-weight:600;">Langganan FinBot <em style="color:#c9a84c;">PRO</em></div>
+      </div>
+
+      <!-- Order Summary -->
+      <div style="background:rgba(201,168,76,0.07); border:1px solid rgba(201,168,76,0.2); border-radius:12px; padding:1.25rem; margin-bottom:2rem;">
+        <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:#6b7280; letter-spacing:0.1em; margin-bottom:0.75rem;">DETAIL PESANAN</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+          <span style="font-size:0.85rem; color:#e8e4dc;">FinBot PRO — Lifetime</span>
+          <span style="font-family:'DM Mono',monospace; font-size:0.85rem; color:#e8e4dc;">Rp 150.000</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <span style="font-size:0.82rem; color:#6b7280;">Akses semua fitur PRO</span>
+          <span style="font-family:'DM Mono',monospace; font-size:0.72rem; color:#2ecc8a; background:rgba(46,204,138,0.1); padding:0.15rem 0.6rem; border-radius:100px;">PRO</span>
+        </div>
+        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.07); margin:0.75rem 0;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-family:'DM Mono',monospace; font-size:0.72rem; color:#6b7280; letter-spacing:0.08em;">TOTAL</span>
+          <span style="font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:600; color:#c9a84c;">Rp 150.000</span>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div style="display:flex; flex-direction:column; gap:1rem; margin-bottom:2rem;">
+        <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:#6b7280; letter-spacing:0.1em;">DATA PENGGUNA</div>
+
+        <div>
+          <label style="font-family:'DM Mono',monospace; font-size:0.68rem; color:#6b7280; letter-spacing:0.06em; display:block; margin-bottom:0.4rem;">NAMA LENGKAP</label>
+          <input id="pay-name" type="text" placeholder="Contoh: Budi Santoso" style="width:100%; background:#141a1f; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:0.75rem 1rem; color:#e8e4dc; font-family:'DM Mono',monospace; font-size:0.82rem; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='rgba(201,168,76,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+        </div>
+
+        <div>
+          <label style="font-family:'DM Mono',monospace; font-size:0.68rem; color:#6b7280; letter-spacing:0.06em; display:block; margin-bottom:0.4rem;">EMAIL</label>
+          <input id="pay-email" type="email" placeholder="email@contoh.com" style="width:100%; background:#141a1f; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:0.75rem 1rem; color:#e8e4dc; font-family:'DM Mono',monospace; font-size:0.82rem; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='rgba(201,168,76,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+        </div>
+
+        <div>
+          <label style="font-family:'DM Mono',monospace; font-size:0.68rem; color:#6b7280; letter-spacing:0.06em; display:block; margin-bottom:0.4rem;">NOMOR WHATSAPP</label>
+          <input id="pay-wa" type="tel" placeholder="08xxxxxxxxxx" style="width:100%; background:#141a1f; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:0.75rem 1rem; color:#e8e4dc; font-family:'DM Mono',monospace; font-size:0.82rem; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='rgba(201,168,76,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+        </div>
+
+        <div>
+          <label style="font-family:'DM Mono',monospace; font-size:0.68rem; color:#6b7280; letter-spacing:0.06em; display:block; margin-bottom:0.4rem;">METODE PEMBAYARAN</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
+            <div class="pay-method active" onclick="selectMethod(this)" style="border:1px solid rgba(201,168,76,0.5); background:rgba(201,168,76,0.08); border-radius:8px; padding:0.7rem; text-align:center; cursor:pointer; transition:all 0.2s;">
+              <div style="font-size:1.2rem;">🏦</div>
+              <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:#e8e4dc; margin-top:0.25rem;">Transfer Bank</div>
+            </div>
+            <div class="pay-method" onclick="selectMethod(this)" style="border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:0.7rem; text-align:center; cursor:pointer; transition:all 0.2s;">
+              <div style="font-size:1.2rem;">💳</div>
+              <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:#e8e4dc; margin-top:0.25rem;">QRIS</div>
+            </div>
+            <div class="pay-method" onclick="selectMethod(this)" style="border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:0.7rem; text-align:center; cursor:pointer; transition:all 0.2s;">
+              <div style="font-size:1.2rem;">🟢</div>
+              <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:#e8e4dc; margin-top:0.25rem;">GoPay</div>
+            </div>
+            <div class="pay-method" onclick="selectMethod(this)" style="border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:0.7rem; text-align:center; cursor:pointer; transition:all 0.2s;">
+              <div style="font-size:1.2rem;">🔵</div>
+              <div style="font-family:'DM Mono',monospace; font-size:0.65rem; color:#e8e4dc; margin-top:0.25rem;">OVO</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pay Button -->
+      <button onclick="submitPayment()" style="width:100%; background:linear-gradient(135deg,#c9a84c,#e8c97a); color:#0a0d0f; padding:1rem; border:none; border-radius:8px; font-family:'Syne',sans-serif; font-size:0.95rem; font-weight:700; letter-spacing:0.05em; cursor:pointer; transition:transform 0.2s, box-shadow 0.2s; box-shadow:0 0 30px rgba(201,168,76,0.2);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 40px rgba(201,168,76,0.35)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 0 30px rgba(201,168,76,0.2)'">
+        Bayar Sekarang — Rp 150.000
+      </button>
+
+      <p style="font-family:'DM Mono',monospace; font-size:0.65rem; color:#6b7280; text-align:center; margin-top:1rem; line-height:1.6;">🔒 Transaksi aman & terenkripsi · Berhenti kapan saja</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openPayment() {
+    document.getElementById('payment-modal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+  function closePayment() {
+    document.getElementById('payment-modal').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  function selectMethod(el) {
+    document.querySelectorAll('.pay-method').forEach(m => {
+      m.style.borderColor = 'rgba(255,255,255,0.1)';
+      m.style.background = 'transparent';
+    });
+    el.style.borderColor = 'rgba(201,168,76,0.5)';
+    el.style.background = 'rgba(201,168,76,0.08)';
+  }
+  function submitPayment() {
+    const name = document.getElementById('pay-name').value.trim();
+    const email = document.getElementById('pay-email').value.trim();
+    const wa = document.getElementById('pay-wa').value.trim();
+    if (!name || !email || !wa) {
+      alert('Mohon lengkapi semua data pengguna terlebih dahulu.');
+      return;
+    }
+    alert('✅ Pesanan diterima!\n\nTerima kasih, ' + name + '!\nKonfirmasi akan dikirim ke:\nEmail: ' + email + '\nWhatsApp: ' + wa);
+    closePayment();
+  }
+  // Close modal on backdrop click
+  document.getElementById('payment-modal').addEventListener('click', function(e) {
+    if (e.target === this) closePayment();
+  });
+</script>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx - 5 + 'px';
+    cursor.style.top = my - 5 + 'px';
+  });
+
+  function animateRing() {
+    rx += (mx - rx - 18) * 0.12;
+    ry += (my - ry - 18) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top = ry + 'px';
+    requestAnimationFrame(animateRing);
+  }
+  animateRing();
+
+  // Intersection observer for animations
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.feature-card, .testi-card, .pricing-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(30px)';
+    el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>

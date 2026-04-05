@@ -1178,7 +1178,7 @@
     el.style.borderColor = 'rgba(201,168,76,0.5)';
     el.style.background = 'rgba(201,168,76,0.08)';
   }
-  async function submitPayment() {
+  function submitPayment() {
     const name = document.getElementById('pay-name').value.trim();
     const email = document.getElementById('pay-email').value.trim();
     const wa = document.getElementById('pay-wa').value.trim();
@@ -1186,25 +1186,9 @@
       alert('Mohon lengkapi semua data pengguna terlebih dahulu.');
       return;
     }
-    try {
-      const btn = document.querySelector('.pay-submit-btn');
-      btn.textContent = 'Memproses...';
-      btn.disabled = true;
-      const response = await fetch('https://finbot-server-production-8a23.up.railway.app/payment/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, whatsapp: wa })
-      });
-      const data = await response.json();
-      if (data.redirect_url) {
-        window.location.href = data.redirect_url;
-      } else {
-        alert('Gagal membuat transaksi. Coba lagi.');
-        btn.textContent = 'Bayar Sekarang';
-        btn.disabled = false;
-      }
-    } catch (err) {
-      alert('Koneksi gagal. Periksa internet kamu.');
+    alert('✅ Pesanan diterima!\n\nTerima kasih, ' + name + '!\nKonfirmasi akan dikirim ke:\nEmail: ' + email + '\nWhatsApp: ' + wa
+    closePayment();
+  }
     }
   }
   }

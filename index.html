@@ -1,0 +1,2572 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinBot — Perencana Keuangan Cerdas di WhatsApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600;1,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0d0f;
+    --bg2: #0f1417;
+    --bg3: #141a1e;
+    --card: #161c21;
+    --card2: #1c2329;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --green: #00e676;
+    --green2: #00c853;
+    --green-dim: rgba(0,230,118,0.1);
+    --green-glow: rgba(0,230,118,0.25);
+    --text: #f0f4f8;
+    --text2: #8a9bb0;
+    --text3: #4a5a6a;
+    --wa: #25D366;
+    --accent: #00e676;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    max-width: 100%;
+    position: relative;
+  }
+
+  h1, h2, h3, h4, h5 {
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.15;
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.6;
+  }
+
+  /* ═══════════════════════════════ NAV ═══════════════════════════════ */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 0 40px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(10,13,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-logo .logo-svg {
+    width: 34px; height: 34px;
+    flex-shrink: 0;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--text2);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: color 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-cta {
+    background: var(--green);
+    color: #000 !important;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
+    transition: opacity 0.2s !important;
+    letter-spacing: 0.01em;
+  }
+
+  .nav-cta:hover { opacity: 0.85; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    padding: 20px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal-box {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 32px;
+    max-width: 560px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+    animation: fadeUp 0.3s ease;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+
+  .modal-close:hover { background: var(--card2); color: var(--text); }
+
+  .modal-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+
+  .modal-sub {
+    font-size: 0.82rem;
+    color: var(--text2);
+    margin-bottom: 24px;
+    font-weight: 300;
+  }
+
+  /* ═══════════════════════════════ HERO ═══════════════════════════════ */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 100px 40px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(0,230,118,0.15) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -60%);
+    pointer-events: none;
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 80%);
+  }
+
+  .hero-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: flex-start;
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--green-dim);
+    border: 1px solid rgba(0,230,118,0.3);
+    color: var(--green);
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .badge-dot {
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .hero h1 {
+    font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--green);
+    position: relative;
+  }
+
+  .hero-desc {
+    color: var(--text2);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin-bottom: 40px;
+    max-width: 480px;
+    animation: fadeUp 0.6s 0.2s ease both;
+    font-weight: 300;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    animation: fadeUp 0.6s 0.3s ease both;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--green);
+    color: #000;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 14px 28px;
+    border-radius: 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px var(--green-glow);
+  }
+
+  .btn-secondary {
+    color: var(--text2);
+    font-size: 0.9rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+    font-weight: 500;
+  }
+
+  .btn-secondary:hover { color: var(--text); }
+
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 52px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+
+  .stat-item strong {
+    display: block;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .stat-item span {
+    font-size: 0.8rem;
+    color: var(--text3);
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+
+  /* CHAT MOCKUP */
+  /* ── HERO VISUAL: Chat Screenshot ─────────────────────────── */
+  .hero-visual {
+    animation: fadeUp 0.7s 0.2s ease both;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .chat-screenshot {
+    width: 380px;
+    background: #111b21;
+    border-radius: 20px;
+    overflow: hidden;
+    max-height: 640px;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.07),
+      0 30px 80px rgba(0,0,0,0.55),
+      0 0 60px rgba(0,230,118,0.07);
+    position: relative;
+  }
+
+  /* subtle top fade to simulate screenshot crop */
+  .chat-screenshot::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #00e676, #00b248, #00e676);
+    z-index: 10;
+  }
+
+  /* WA header */
+  .wa-header {
+    background: #1f2c34;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-shrink: 0;
+  }
+
+  .wa-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00e676, #00b248);
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(0,230,118,0.2);
+  }
+
+  .wa-info { flex: 1; }
+  .wa-info strong {
+    display: block;
+    font-size: 0.88rem;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+    color: #e9edef;
+    line-height: 1.3;
+  }
+  .wa-info span {
+    font-size: 0.68rem;
+    color: #00e676;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Poppins', sans-serif;
+  }
+  .wa-header-icons {
+    display: flex;
+    gap: 14px;
+    opacity: 0.5;
+    font-size: 1rem;
+  }
+
+  /* WA chat body */
+  .wa-body {
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 10% 80%, rgba(0,92,75,0.1) 0%, transparent 60%),
+      #111b21;
+  }
+
+  .wa-date-label {
+    align-self: center;
+    background: rgba(255,255,255,0.06);
+    color: #8696a0;
+    font-size: 0.63rem;
+    font-family: 'Poppins', sans-serif;
+    padding: 3px 12px;
+    border-radius: 20px;
+    margin-bottom: 2px;
+  }
+
+  /* WA bubbles */
+  .wa-msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 80%;
+    gap: 2px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .wa-msg.show { opacity: 1; transform: translateY(0); }
+
+  .wa-msg.bot  { align-self: flex-start; }
+  .wa-msg.user { align-self: flex-end; align-items: flex-end; }
+
+  .wa-bubble {
+    padding: 7px 11px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    font-family: 'Poppins', sans-serif;
+  }
+  .wa-msg.bot .wa-bubble {
+    background: #202c33;
+    color: #e9edef;
+    border-top-left-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .wa-msg.user .wa-bubble {
+    background: #005c4b;
+    color: #e9edef;
+    border-top-right-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+
+  .wa-time {
+    font-size: 0.6rem;
+    color: #8696a0;
+    font-family: 'Poppins', sans-serif;
+    padding: 0 3px;
+    display: flex; align-items: center; gap: 3px;
+  }
+  .wa-msg.user .wa-time { justify-content: flex-end; }
+  .wa-tick { color: #53bdeb; }
+
+  /* Summary card */
+  .wa-summary {
+    background: #1a2530;
+    border-radius: 12px;
+    padding: 9px 11px;
+    max-width: 84%;
+    align-self: flex-start;
+    border-left: 3px solid #00e676;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .wa-summary.show { opacity: 1; transform: translateY(0); }
+
+  .wa-summary-title {
+    font-size: 0.63rem;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+    color: #00e676;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  .wa-summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    font-family: 'Poppins', sans-serif;
+    padding: 3px 0;
+    gap: 16px;
+    color: #aebac1;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .wa-summary-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .wa-pos { color: #00e676; font-weight: 600; }
+  .wa-neg { color: #ff6b6b; font-weight: 600; }
+  .wa-bal { color: #e9edef; font-weight: 600; }
+
+  /* Typing indicator */
+  .wa-typing {
+    display: flex; align-items: center; gap: 4px;
+    padding: 9px 13px;
+    background: #202c33;
+    border-radius: 12px;
+    border-top-left-radius: 3px;
+    width: fit-content;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .wa-typing.show { opacity: 1; }
+  .tdot {
+    width: 7px; height: 7px;
+    background: #8696a0; border-radius: 50%;
+    animation: tdot 1.2s ease-in-out infinite;
+  }
+  .tdot:nth-child(2) { animation-delay: 0.2s; }
+  .tdot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes tdot {
+    0%,60%,100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* Input bar */
+  .wa-inputbar {
+    background: #1f2c34;
+    padding: 8px 14px;
+    display: flex; align-items: center; gap: 10px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .wa-input-pill {
+    flex: 1;
+    background: #2a3942;
+    border-radius: 22px;
+    padding: 8px 16px;
+    font-size: 0.75rem;
+    color: #8696a0;
+    font-family: 'Poppins', sans-serif;
+  }
+  .wa-mic-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: #00e676;
+    display: grid; place-items: center;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(0,230,118,0.3);
+    flex-shrink: 0;
+  }
+  .wa-emoji-icon { font-size: 1.1rem; opacity: 0.5; }
+
+  /* WHY SECTION */
+  .why-section {
+    padding: 0 40px 120px;
+    position: relative;
+  }
+
+  .why-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 24px;
+    padding: 48px;
+  }
+
+  .why-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 16px;
+  }
+
+  .why-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 36px;
+  }
+
+  .why-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 20px;
+    background: var(--bg3);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .why-item:hover {
+    border-color: rgba(0,230,118,0.3);
+    transform: translateY(-2px);
+  }
+
+  .why-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    width: 36px; height: 36px;
+    background: var(--green-dim);
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+  }
+
+  .why-text strong {
+    display: block;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .why-text p {
+    font-size: 0.82rem;
+    color: var(--text2);
+    font-weight: 300;
+    line-height: 1.6;
+  }
+
+  /* ═══════════════════════════════ SECTIONS ═══════════════════════════════ */
+  section {
+    padding: 100px 40px;
+  }
+
+  .section-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 16px;
+  }
+
+  .section-label::before {
+    content: '';
+    width: 20px; height: 1px;
+    background: var(--green);
+  }
+
+  .section-title {
+    font-size: clamp(1.8rem, 3vw, 2.8rem);
+    font-weight: 800;
+    margin-bottom: 16px;
+  }
+
+  .section-title em {
+    font-style: normal;
+    color: var(--green);
+  }
+
+  .section-sub {
+    color: var(--text2);
+    font-size: 1rem;
+    max-width: 520px;
+    font-weight: 300;
+    line-height: 1.7;
+    margin-bottom: 60px;
+  }
+
+  /* ═══════════════════════════════ FEATURES ═══════════════════════════════ */
+  #fitur { background: var(--bg2); }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .feature-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.25s, transform 0.25s;
+    cursor: default;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--green-dim) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .feature-card:hover {
+    border-color: rgba(0,230,118,0.35);
+    transform: translateY(-4px);
+  }
+
+  .feature-card:hover::before { opacity: 1; }
+
+  .feature-num {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+  }
+
+  .feature-icon {
+    font-size: 1.6rem;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .feature-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .feature-card p {
+    font-size: 0.83rem;
+    color: var(--text2);
+    line-height: 1.65;
+    font-weight: 300;
+  }
+
+  /* ═══════════════════════════════ HOW IT WORKS ═══════════════════════════════ */
+  #cara-kerja { background: var(--bg); }
+
+  .steps-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .step-item {
+    display: flex;
+    gap: 24px;
+    position: relative;
+  }
+
+  .step-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 19px; top: 44px;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, rgba(0,230,118,0.4), transparent);
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: var(--green-dim);
+    border: 1px solid rgba(0,230,118,0.35);
+    display: grid;
+    place-items: center;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 0.82rem;
+    color: var(--green);
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-content {
+    padding-bottom: 40px;
+  }
+
+  .step-item:last-child .step-content { padding-bottom: 0; }
+
+  .step-content h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    margin-top: 8px;
+  }
+
+  .step-content p {
+    font-size: 0.85rem;
+    color: var(--text2);
+    line-height: 1.65;
+    font-weight: 300;
+  }
+
+  /* DASHBOARD PREVIEW */
+  .dashboard-preview {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+  }
+
+  .dash-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .dash-header h4 {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .dash-sync {
+    font-size: 0.7rem;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .dash-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .dash-stat {
+    background: var(--bg3);
+    border-radius: 12px;
+    padding: 14px;
+    border: 1px solid var(--border);
+  }
+
+  .dash-stat-label {
+    font-size: 0.65rem;
+    color: var(--text3);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .dash-stat-val {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  .dash-stat-val.green { color: var(--green); }
+  .dash-stat-val.red { color: #ff6b6b; }
+
+  .dash-stat-badge {
+    font-size: 0.65rem;
+    color: var(--text3);
+    margin-top: 3px;
+  }
+
+  .dash-chart {
+    background: var(--bg3);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+
+  .dash-chart-label {
+    font-size: 0.7rem;
+    color: var(--text3);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .dash-chart-legend {
+    display: flex;
+    gap: 12px;
+    font-size: 0.65rem;
+    color: var(--text3);
+    align-items: center;
+  }
+
+  .legend-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 70px;
+  }
+
+  .chart-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .chart-pair {
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+    flex: 1;
+    max-height: 100%;
+  }
+
+  .bar {
+    width: 7px;
+    border-radius: 3px 3px 0 0;
+    transition: height 0.3s;
+  }
+
+  .bar.in { background: var(--green); }
+  .bar.out { background: rgba(255,107,107,0.7); }
+
+  .chart-month {
+    font-size: 0.6rem;
+    color: var(--text3);
+    text-align: center;
+  }
+
+  .dash-txns {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dash-txn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--bg3);
+    border-radius: 10px;
+    font-size: 0.78rem;
+    border: 1px solid var(--border);
+  }
+
+  .txn-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text2);
+  }
+
+  .txn-icon {
+    width: 28px; height: 28px;
+    background: var(--card2);
+    border-radius: 7px;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+  }
+
+  .txn-pos { color: var(--green); font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 0.82rem; }
+  .txn-neg { color: #ff6b6b; font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 0.82rem; }
+
+  /* ═══════════════════════════════ PRICING ═══════════════════════════════ */
+  #harga { background: var(--bg2); }
+
+  .pricing-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .pricing-main-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+
+  .price-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 24px;
+    position: relative;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+
+  .price-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .price-card.popular {
+    border-color: rgba(0,230,118,0.4);
+    background: linear-gradient(145deg, #0f1c16 0%, var(--card) 100%);
+  }
+
+  .popular-badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--green);
+    color: #000;
+    font-size: 0.65rem;
+    font-weight: 800;
+    font-family: 'Poppins', sans-serif;
+    padding: 4px 12px;
+    border-radius: 100px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .price-duration {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .price-amount {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+
+  .price-currency {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text2);
+  }
+
+  .price-num {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .price-period {
+    font-size: 0.78rem;
+    color: var(--text3);
+    margin-bottom: 20px;
+    font-weight: 300;
+  }
+
+  .price-features {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-bottom: 24px;
+    min-height: 200px;
+  }
+
+  .price-features li {
+    font-size: 0.8rem;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 300;
+  }
+
+  .price-features li.check::before {
+    content: '✓';
+    color: var(--green);
+    font-weight: 700;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .price-features li.cross {
+    color: var(--text3);
+    text-decoration: line-through;
+  }
+
+  .price-features li.cross::before {
+    content: '✕';
+    color: var(--text3);
+    font-weight: 700;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+    text-decoration: none;
+  }
+
+  .btn-price {
+    display: block;
+    text-align: center;
+    padding: 12px;
+    border-radius: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .btn-price-outline {
+    border: 1px solid var(--border2);
+    color: var(--text);
+  }
+
+  .btn-price-outline:hover {
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  .btn-price-fill {
+    background: var(--green);
+    color: #000;
+    border: none;
+  }
+
+  .btn-price-fill:hover {
+    box-shadow: 0 8px 30px var(--green-glow);
+    transform: translateY(-1px);
+  }
+
+  .pricing-alt {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .alt-tag {
+    display: inline-block;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text3);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .alt-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+
+  .alt-sub {
+    font-size: 0.83rem;
+    color: var(--text2);
+    font-weight: 300;
+    max-width: 400px;
+  }
+
+  .alt-price-wrap {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    flex-shrink: 0;
+  }
+
+  .alt-price .price-amount { margin-bottom: 0; }
+  .alt-price .price-period { margin-bottom: 0; }
+
+  /* DASHBOARD PREVIEW IN PRICING */
+  .dash-mini {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-left: auto;
+    width: 220px;
+  }
+
+  .dash-mini-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .dash-mini-stat {
+    background: var(--card2);
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+  }
+
+  .dash-mini-stat .val {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--green);
+  }
+
+  .dash-mini-stat .label {
+    font-size: 0.55rem;
+    color: var(--text3);
+    margin-top: 2px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .mini-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 40px;
+  }
+
+  .mini-bar {
+    flex: 1;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .mini-bar.in { background: var(--green); opacity: 0.8; }
+  .mini-bar.out { background: rgba(255,107,107,0.6); }
+
+  /* ═══════════════════════════════ TESTIMONIALS ═══════════════════════════════ */
+  #testimoni { background: var(--bg); }
+
+  .testi-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .testi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .testi-card::before {
+    content: '"';
+    position: absolute;
+    top: -10px; right: 16px;
+    font-size: 120px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    color: rgba(0,230,118,0.06);
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .testi-card:hover {
+    border-color: rgba(0,230,118,0.25);
+    transform: translateY(-3px);
+  }
+
+  .testi-stars {
+    color: var(--green);
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+  }
+
+  .testi-text {
+    font-size: 0.87rem;
+    color: var(--text2);
+    line-height: 1.7;
+    font-weight: 300;
+    margin-bottom: 20px;
+  }
+
+  .testi-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .testi-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--card2), var(--bg3));
+    border: 1px solid var(--border2);
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+  }
+
+  .testi-author-info strong {
+    display: block;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .testi-author-info span {
+    font-size: 0.72rem;
+    color: var(--text3);
+    font-weight: 300;
+  }
+
+  /* ═══════════════════════════════ FAQ ═══════════════════════════════ */
+  #faq { background: var(--bg2); }
+
+  .faq-layout {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 80px;
+  }
+
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .faq-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .faq-item:hover { border-color: rgba(0,230,118,0.2); }
+
+  .faq-question {
+    padding: 18px 20px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    user-select: none;
+    list-style: none;
+  }
+
+  .faq-question::marker, .faq-question::-webkit-details-marker { display: none; }
+
+  .faq-arrow {
+    flex-shrink: 0;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    background: var(--bg3);
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    color: var(--text2);
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  details[open] .faq-arrow {
+    transform: rotate(180deg);
+    background: var(--green-dim);
+    color: var(--green);
+  }
+
+  .faq-answer {
+    padding: 0 20px 18px;
+    font-size: 0.83rem;
+    color: var(--text2);
+    line-height: 1.7;
+    font-weight: 300;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+
+  /* ═══════════════════════════════ INSTAGRAM ═══════════════════════════════ */
+  .instagram-section {
+    padding: 80px 40px;
+    background: var(--bg);
+  }
+
+  .instagram-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, #0f1c16 0%, var(--card) 100%);
+    border: 1px solid rgba(0,230,118,0.25);
+    border-radius: 24px;
+    padding: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+
+  .instagram-text h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+
+  .instagram-text h2 em { font-style: normal; color: var(--green); }
+
+  .instagram-text p {
+    font-size: 0.9rem;
+    color: var(--text2);
+    max-width: 420px;
+    font-weight: 300;
+  }
+
+  .btn-instagram {
+    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 14px 28px;
+    border-radius: 10px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: transform 0.2s, box-shadow 0.2s;
+    flex-shrink: 0;
+  }
+
+  .btn-instagram:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(253,29,29,0.3);
+  }
+
+  /* ═══════════════════════════════ CTA ═══════════════════════════════ */
+  .cta-section {
+    padding: 120px 40px;
+    background: var(--bg2);
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .cta-glow {
+    position: absolute;
+    width: 500px; height: 300px;
+    background: radial-gradient(circle, rgba(0,230,118,0.12) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .cta-inner {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .cta-inner h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 800;
+    margin-bottom: 16px;
+  }
+
+  .cta-inner h2 em { font-style: normal; color: var(--green); }
+
+  .cta-inner p {
+    color: var(--text2);
+    font-size: 1rem;
+    margin-bottom: 40px;
+    font-weight: 300;
+  }
+
+  .cta-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* ═══════════════════════════════ FOOTER ═══════════════════════════════ */
+  footer {
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    padding: 32px 40px;
+  }
+
+  .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .footer-logo {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    color: var(--text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .footer-copy {
+    font-size: 0.78rem;
+    color: var(--text3);
+    font-weight: 300;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 20px;
+  }
+
+  .footer-links a {
+    font-size: 0.8rem;
+    color: var(--text3);
+    text-decoration: none;
+    transition: color 0.2s;
+    font-weight: 400;
+  }
+
+  .footer-links a:hover { color: var(--green); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    .hero { padding: 90px 20px 60px; }
+    .hero-inner { grid-template-columns: 1fr; gap: 48px; }
+    section { padding: 70px 20px; }
+    .features-grid { grid-template-columns: 1fr 1fr; }
+    .steps-layout { grid-template-columns: 1fr; }
+    .pricing-main-grid { grid-template-columns: 1fr 1fr; }
+    .testi-grid { grid-template-columns: 1fr; }
+    .faq-layout { grid-template-columns: 1fr; }
+    .instagram-section { padding: 60px 20px; }
+    .instagram-inner { padding: 36px; }
+    footer { padding: 24px 20px; }
+    .why-grid { grid-template-columns: 1fr; }
+    .why-section { padding: 0 20px 80px; }
+    .why-inner { padding: 28px; }
+    .cta-section { padding: 80px 20px; }
+  }
+
+  @media (max-width: 600px) {
+    .features-grid { grid-template-columns: 1fr; }
+    .pricing-main-grid { grid-template-columns: 1fr; }
+    .alt-price-wrap { flex-direction: column; align-items: flex-start; }
+    .dash-mini { display: none; }
+    .hero-stats { gap: 24px; }
+  }
+
+  /* Fix horizontal scroll on all devices */
+  section, nav, footer, .hero, .cta-section, .instagram-section, .why-section,
+  .section-inner, .hero-inner, .features-grid, .pricing-main-grid,
+  .testi-grid, .faq-layout, .steps-layout, .pricing-alt {
+    max-width: 100%;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <svg class="logo-svg" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="34" height="34" rx="9" fill="#00e676"/>
+      <rect x="9" y="8" width="16" height="3" rx="1.5" fill="#000"/>
+      <rect x="9" y="15.5" width="11" height="3" rx="1.5" fill="#000"/>
+      <rect x="9" y="8" width="3" height="18" rx="1.5" fill="#000"/>
+    </svg>
+    FinBot
+  </a>
+  <ul class="nav-links">
+    <li><a href="#fitur">Fitur</a></li>
+    <li><a href="#cara-kerja">Cara Kerja</a></li>
+    <li><a href="#harga">Harga</a></li>
+    <li><a href="#testimoni">Testimoni</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#harga" class="nav-cta">Coba Sekarang</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        AI Financial Planner via WhatsApp
+      </div>
+      <h1>Kelola Keuangan <em>Lebih Cerdas</em> Langsung di WA</h1>
+      <p class="hero-desc">Catat pemasukan, lacak pengeluaran, dan terima analisis keuangan personal — semua cukup lewat chat WhatsApp. Tidak perlu aplikasi baru.</p>
+      <div class="hero-actions">
+        <a href="#harga" class="btn-primary">Lihat Paket Harga →</a>
+        <a href="#cara-kerja" class="btn-secondary">Lihat cara kerja ↓</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <strong>1K+</strong>
+          <span>Pengguna Aktif</span>
+        </div>
+        <div class="stat-item">
+          <strong>98%</strong>
+          <span>Kepuasan Pengguna</span>
+        </div>
+        <div class="stat-item">
+          <strong>Rp29K</strong>
+          <span>Mulai dari /bulan</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="chat-screenshot">
+
+        <!-- WA Header -->
+        <div class="wa-header">
+          <div class="wa-avatar">🤖</div>
+          <div class="wa-info">
+            <strong>FinBot Assistant</strong>
+            <span><span class="online-dot"></span> Online</span>
+          </div>
+          <div class="wa-header-icons">
+            <span>📹</span>
+            <span>📞</span>
+            <span>⋮</span>
+          </div>
+        </div>
+
+        <!-- Chat Body -->
+        <div class="wa-body">
+          <div class="wa-date-label">Hari ini</div>
+
+          <div class="wa-msg bot" id="cm1">
+            <div class="wa-bubble">Halo! Saya FinBot 👋<br>Mau catat transaksi atau cek keuangan hari ini?</div>
+            <span class="wa-time">09:14</span>
+          </div>
+
+          <div class="wa-typing" id="ct1"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>
+
+          <div class="wa-msg user" id="cm2">
+            <div class="wa-bubble">servis motor 200rb</div>
+            <span class="wa-time">09:15 <span class="wa-tick">✓✓</span></span>
+          </div>
+
+          <div class="wa-typing" id="ct2"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>
+
+          <div class="wa-msg bot" id="cm3">
+            <div class="wa-bubble">✅ <strong>Tercatat!</strong><br>Pengeluaran · 🔧 Transportasi<br><span style="font-size:0.95rem;font-weight:700">Rp 200.000</span></div>
+            <span class="wa-time">09:15</span>
+          </div>
+
+          <div class="wa-summary" id="cm4">
+            <div class="wa-summary-title">📊 Ringkasan Hari Ini</div>
+            <div class="wa-summary-row"><span>💰 Pemasukan</span><span class="wa-pos">+Rp 5.000.000</span></div>
+            <div class="wa-summary-row"><span>💸 Pengeluaran</span><span class="wa-neg">−Rp 200.000</span></div>
+            <div class="wa-summary-row"><span>⚖️ Sisa Budget</span><span class="wa-bal">Rp 4.800.000</span></div>
+          </div>
+
+          <div class="wa-typing" id="ct3"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>
+
+          <div class="wa-msg user" id="cm5">
+            <div class="wa-bubble">total belanja bulan ini?</div>
+            <span class="wa-time">09:16 <span class="wa-tick">✓✓</span></span>
+          </div>
+
+          <div class="wa-typing" id="ct4"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>
+
+          <div class="wa-msg bot" id="cm6">
+            <div class="wa-bubble">Belanja bulan ini:<br><span style="font-size:1rem;font-weight:700">Rp 1.845.000</span><br><span style="color:#8696a0;font-size:0.72rem">62% dari budget Rp 3jt 📊</span></div>
+            <span class="wa-time">09:16</span>
+          </div>
+        </div>
+
+        <!-- Input Bar -->
+        <div class="wa-inputbar">
+          <span class="wa-emoji-icon">😊</span>
+          <div class="wa-input-pill">Ketik pesan...</div>
+          <div class="wa-mic-btn">🎙️</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  // ── Chat animation ──────────────────────────────────────────────
+  (function chatAnim() {
+    const msgs   = ['cm1','cm2','cm3','cm4','cm5','cm6'];
+    const typings= ['ct1','ct2','ct3','ct4'];
+
+    function reset() {
+      msgs.forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('show'); });
+      typings.forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('show'); });
+    }
+
+    function step(seq, i) {
+      if (i >= seq.length) { setTimeout(() => { reset(); setTimeout(() => chatAnim(), 600); }, 2000); return; }
+      const s = seq[i];
+      setTimeout(() => {
+        if (s.hide) { const el = document.getElementById(s.hide); if(el) el.classList.remove('show'); }
+        if (s.show) { const el = document.getElementById(s.show); if(el) el.classList.add('show'); }
+        step(seq, i + 1);
+      }, s.delay);
+    }
+
+    const seq = [
+      { show: 'cm1',  delay: 400  },
+      { show: 'ct1',  delay: 800  },
+      { hide: 'ct1', show: 'cm2', delay: 1000 },
+      { show: 'ct2',  delay: 500  },
+      { hide: 'ct2', show: 'cm3', delay: 900  },
+      { show: 'cm4',  delay: 400  },
+      { show: 'ct3',  delay: 900  },
+      { hide: 'ct3', show: 'cm5', delay: 1000 },
+      { show: 'ct4',  delay: 500  },
+      { hide: 'ct4', show: 'cm6', delay: 900  },
+    ];
+
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) { reset(); step(seq, 0); obs.disconnect(); }
+    }, { threshold: 0.3 });
+
+    const el = document.querySelector('.chat-screenshot');
+    if (el) obs.observe(el);
+  })();
+</script>
+
+<!-- WHY FINBOT -->
+<div class="why-section">
+  <div class="why-inner reveal">
+    <div class="why-label">Kenapa FinBot?</div>
+    <h2 style="font-size:1.6rem; font-weight:800; font-family:'Poppins',sans-serif;">Solusi keuangan yang benar-benar <em style="color:var(--green); font-style:normal;">praktis</em></h2>
+    <div class="why-grid">
+      <div class="why-item">
+        <div class="why-icon">📱</div>
+        <div class="why-text">
+          <strong>Tidak perlu aplikasi baru</strong>
+          <p>Semua berjalan langsung di WhatsApp yang sudah kamu pakai setiap hari.</p>
+        </div>
+      </div>
+      <div class="why-item">
+        <div class="why-icon">⚡</div>
+        <div class="why-text">
+          <strong>Catat dalam hitungan detik</strong>
+          <p>Cukup ketik seperti chat biasa, FinBot langsung mencatat dan mengkategorikan otomatis.</p>
+        </div>
+      </div>
+      <div class="why-item">
+        <div class="why-icon">📊</div>
+        <div class="why-text">
+          <strong>Dashboard real-time & laporan lengkap</strong>
+          <p>Pantau arus kas, grafik pengeluaran, dan ekspor laporan PDF/Excel kapan saja.</p>
+        </div>
+      </div>
+      <div class="why-item">
+        <div class="why-icon">💸</div>
+        <div class="why-text">
+          <strong>Harga terjangkau, mulai Rp29K/bulan</strong>
+          <p>Investasi kecil untuk kebiasaan finansial yang lebih sehat dan terencana.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="fitur">
+  <div class="section-inner">
+    <div class="section-label">Fitur Unggulan</div>
+    <h2 class="section-title">Semua yang Anda butuhkan untuk <em>kendali finansial</em></h2>
+    <p class="section-sub">Dirancang untuk kemudahan nyata, bukan sekadar fitur yang terlihat keren di atas kertas.</p>
+
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-num">01</div>
+        <span class="feature-icon">💬</span>
+        <h3>Catat via Chat Natural</h3>
+        <p>Cukup ketik "makan siang 45rb" atau "gaji masuk 5 juta". FinBot memahami bahasa sehari-hari dan mencatat otomatis.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-num">02</div>
+        <span class="feature-icon">📊</span>
+        <h3>Dashboard Real-time</h3>
+        <p>Akses visualisasi data keuangan Anda kapan saja melalui dashboard web yang selalu sinkron dengan chat bot.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-num">03</div>
+        <span class="feature-icon">🎯</span>
+        <h3>Target Tabungan</h3>
+        <p>Set target tabungan dan pantau progresnya secara visual. Tetap termotivasi menuju tujuan finansial Anda.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-num">04</div>
+        <span class="feature-icon">🗂️</span>
+        <h3>Riwayat Transaksi</h3>
+        <p>Semua transaksi tersimpan rapi dan dapat dicari, difilter, serta diedit kapan saja melalui dashboard interaktif.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-num">05</div>
+        <span class="feature-icon">📤</span>
+        <h3>Ekspor Laporan</h3>
+        <p>Unduh laporan keuangan bulanan dalam format PDF atau Excel untuk keperluan pribadi atau akuntansi.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-num">06</div>
+        <span class="feature-icon">📈</span>
+        <h3>Visualisasi Arus Kas</h3>
+        <p>Grafik dan chart interaktif membantu Anda memahami pola pemasukan dan pengeluaran secara visual dan intuitif.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="cara-kerja">
+  <div class="section-inner">
+    <div class="section-label">Cara Kerja</div>
+    <h2 class="section-title">Mulai dalam <em>3 langkah</em> mudah</h2>
+    <p class="section-sub">Dari daftar hingga mencatat transaksi pertama, butuh kurang dari 5 menit.</p>
+
+    <div class="steps-layout">
+      <div class="steps-list">
+        <div class="step-item reveal">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <h3>Pilih Paket & Dapatkan Akses FinBot AI di WhatsApp</h3>
+            <p>Pilih paket, cek email untuk menerima aktivasi akun dashboard dan link untuk akses FinBot AI di WhatsApp kalian.</p>
+          </div>
+        </div>
+        <div class="step-item reveal">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <h3>Mulai Catat Transaksi</h3>
+            <p>Chat seperti biasa. Ketik transaksi kapan saja — FinBot memproses dan menyimpan semua data secara otomatis.</p>
+          </div>
+        </div>
+        <div class="step-item reveal">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <h3>Akses Dashboard & Analisis</h3>
+            <p>Login ke dashboard web untuk melihat grafik, laporan, dan insight keuangan Anda yang selalu terkini.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <div class="dashboard-preview">
+          <div class="dash-header">
+            <h4>Dashboard Saya</h4>
+            <span class="dash-sync"><span class="online-dot"></span> Sinkron</span>
+          </div>
+
+          <div class="dash-stats">
+            <div class="dash-stat" style="border-top: 2px solid var(--green);">
+              <div class="dash-stat-label">Pemasukan</div>
+              <div class="dash-stat-val green">Rp 8,5jt</div>
+              <div class="dash-stat-badge">↑ +12%</div>
+            </div>
+            <div class="dash-stat" style="border-top: 2px solid #ff6b6b;">
+              <div class="dash-stat-label">Pengeluaran</div>
+              <div class="dash-stat-val red">Rp 3,2jt</div>
+              <div class="dash-stat-badge">↓ -5%</div>
+            </div>
+            <div class="dash-stat" style="border-top: 2px solid #c9a84c;">
+              <div class="dash-stat-label">Saldo Bersih</div>
+              <div class="dash-stat-val green">Rp 5,3jt</div>
+              <div class="dash-stat-badge">↑ Sehat</div>
+            </div>
+          </div>
+
+          <div class="dash-chart">
+            <div class="dash-chart-label">
+              <span>Arus Kas — 6 Bulan Terakhir</span>
+              <div class="dash-chart-legend">
+                <span><span class="legend-dot" style="background:var(--green)"></span> Pemasukan</span>
+                <span><span class="legend-dot" style="background:#c9a84c"></span> Pengeluaran</span>
+              </div>
+            </div>
+            <div class="chart-bars">
+              <div class="chart-group">
+                <div class="chart-pair">
+                  <div class="bar in" style="height:60%"></div>
+                  <div class="bar out" style="height:40%; background:#c9a84c;"></div>
+                </div>
+                <div class="chart-month">Nov</div>
+              </div>
+              <div class="chart-group">
+                <div class="chart-pair">
+                  <div class="bar in" style="height:75%"></div>
+                  <div class="bar out" style="height:45%; background:#c9a84c;"></div>
+                </div>
+                <div class="chart-month">Des</div>
+              </div>
+              <div class="chart-group">
+                <div class="chart-pair">
+                  <div class="bar in" style="height:65%"></div>
+                  <div class="bar out" style="height:50%; background:#c9a84c;"></div>
+                </div>
+                <div class="chart-month">Jan</div>
+              </div>
+              <div class="chart-group">
+                <div class="chart-pair">
+                  <div class="bar in" style="height:80%"></div>
+                  <div class="bar out" style="height:35%; background:#c9a84c;"></div>
+                </div>
+                <div class="chart-month">Feb</div>
+              </div>
+              <div class="chart-group">
+                <div class="chart-pair">
+                  <div class="bar in" style="height:70%"></div>
+                  <div class="bar out" style="height:42%; background:#c9a84c;"></div>
+                </div>
+                <div class="chart-month">Mar</div>
+              </div>
+              <div class="chart-group">
+                <div class="chart-pair">
+                  <div class="bar in" style="height:90%"></div>
+                  <div class="bar out" style="height:38%; background:#c9a84c;"></div>
+                </div>
+                <div class="chart-month">Apr</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-txns">
+            <div style="font-size:0.7rem; font-weight:700; font-family:'Poppins',sans-serif; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;">Transaksi Terbaru</div>
+            <div class="dash-txn">
+              <div class="txn-name"><div class="txn-icon">🍜</div> Makan Siang</div>
+              <span class="txn-neg">-Rp 45.000</span>
+            </div>
+            <div class="dash-txn">
+              <div class="txn-name"><div class="txn-icon">💰</div> Gaji Bulanan</div>
+              <span class="txn-pos">+Rp 5.000.000</span>
+            </div>
+            <div class="dash-txn">
+              <div class="txn-name"><div class="txn-icon">⛽</div> Bensin</div>
+              <span class="txn-neg">-Rp 80.000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="harga">
+  <div class="section-inner">
+    <div class="section-label">Harga</div>
+    <h2 class="section-title">Investasi kecil untuk <em>masa depan finansial</em></h2>
+    <p class="section-sub">Satu paket, semua fitur. Pilih durasi yang sesuai kebutuhan kamu.</p>
+
+    <div class="pricing-wrap">
+      <div style="background:var(--card2); border:1px solid var(--border); border-radius:12px; padding:12px 20px; font-size:0.8rem; color:var(--text2); font-weight:500; margin-bottom:8px; display:inline-flex; align-items:center; gap:8px;">
+        <span style="color:var(--green); font-weight:700;">●</span> PAKET LENGKAP — ChatBot FinBot AI + Dashboard Interaktif
+      </div>
+
+      <div class="pricing-main-grid">
+        <div class="price-card reveal">
+          <div class="price-duration">1 Bulan</div>
+          <div class="price-amount">
+            <span class="price-currency">Rp</span>
+            <span class="price-num">29K</span>
+          </div>
+          <div class="price-period">per bulan</div>
+          <ul class="price-features">
+            <li class="check">ChatBot FinBot AI via WA</li>
+            <li class="check">Dashboard interaktif</li>
+            <li class="check">Riwayat transaksi lengkap</li>
+            <li class="check">Target tabungan</li>
+            <li class="check">Ekspor Excel / CSV</li>
+            <li class="check">Ekspor PDF</li>
+            <li class="check">Chart visualisasi arus kas</li>
+          </ul>
+          <a href="#" class="btn-price btn-price-outline" onclick="openPayment('FinBot PRO — 1 Bulan','Rp 29.000'); return false;">Pilih Paket</a>
+        </div>
+
+        <div class="price-card popular reveal">
+          <div class="popular-badge">Hemat 9%</div>
+          <div class="price-duration">3 Bulan</div>
+          <div class="price-amount">
+            <span class="price-currency">Rp</span>
+            <span class="price-num">79K</span>
+          </div>
+          <div class="price-period">untuk 3 bulan</div>
+          <ul class="price-features">
+            <li class="check">ChatBot FinBot AI via WA</li>
+            <li class="check">Dashboard interaktif</li>
+            <li class="check">Riwayat transaksi lengkap</li>
+            <li class="check">Target tabungan</li>
+            <li class="check">Ekspor Excel / CSV</li>
+            <li class="check">Ekspor PDF</li>
+            <li class="check">Chart visualisasi arus kas</li>
+          </ul>
+          <a href="#" class="btn-price btn-price-fill" onclick="openPayment('FinBot PRO — 3 Bulan','Rp 79.000'); return false;">Pilih Paket</a>
+        </div>
+
+        <div class="price-card reveal">
+          <div class="price-duration">6 Bulan</div>
+          <div class="price-amount">
+            <span class="price-currency">Rp</span>
+            <span class="price-num">149K</span>
+          </div>
+          <div class="price-period">untuk 6 bulan</div>
+          <ul class="price-features">
+            <li class="check">ChatBot FinBot AI via WA</li>
+            <li class="check">Dashboard interaktif</li>
+            <li class="check">Riwayat transaksi lengkap</li>
+            <li class="check">Target tabungan</li>
+            <li class="check">Ekspor Excel / CSV</li>
+            <li class="check">Ekspor PDF</li>
+            <li class="check">Chart visualisasi arus kas</li>
+          </ul>
+          <a href="#" class="btn-price btn-price-outline" onclick="openPayment('FinBot PRO — 6 Bulan','Rp 149.000'); return false;">Pilih Paket</a>
+        </div>
+
+        <div class="price-card reveal">
+          <div class="price-duration">1 Tahun</div>
+          <div class="price-amount">
+            <span class="price-currency">Rp</span>
+            <span class="price-num">299K</span>
+          </div>
+          <div class="price-period">untuk 12 bulan</div>
+          <ul class="price-features">
+            <li class="check">ChatBot FinBot AI via WA</li>
+            <li class="check">Dashboard interaktif</li>
+            <li class="check">Riwayat transaksi lengkap</li>
+            <li class="check">Target tabungan</li>
+            <li class="check">Ekspor Excel / CSV</li>
+            <li class="check">Ekspor PDF</li>
+            <li class="check">Chart visualisasi arus kas</li>
+          </ul>
+          <a href="#" class="btn-price btn-price-outline" onclick="openPayment('FinBot PRO — 1 Tahun','Rp 299.000'); return false;">Pilih Paket</a>
+        </div>
+      </div>
+
+      <!-- ALT PLAN -->
+      <div class="pricing-alt reveal">
+        <div>
+          <div class="alt-tag">Paket Alternatif — Dashboard Only · Tanpa ChatBot</div>
+          <div class="alt-title">Dashboard Only</div>
+          <div class="alt-sub">Cocok jika kamu hanya butuh dashboard untuk pantau & analisis keuangan tanpa bot WhatsApp.</div>
+        </div>
+        <div class="alt-price-wrap">
+          <div class="alt-price">
+            <div class="price-amount">
+              <span class="price-currency">Rp</span>
+              <span class="price-num" style="font-size:1.8rem;">49K</span>
+            </div>
+            <div class="price-period">per bulan</div>
+          </div>
+          <div class="dash-mini">
+            <div style="font-size:0.62rem; font-weight:700; font-family:'Poppins',sans-serif; color:var(--green); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px; padding:0 2px;">Preview Dashboard</div>
+            <div class="dash-mini-stats">
+              <div class="dash-mini-stat" style="border-top:2px solid var(--green);">
+                <div class="val">Rp8,5jt</div>
+                <div class="label">Pemasukan</div>
+              </div>
+              <div class="dash-mini-stat" style="border-top:2px solid #ff6b6b;">
+                <div class="val" style="color:#ff6b6b">Rp3,2jt</div>
+                <div class="label">Pengeluaran</div>
+              </div>
+              <div class="dash-mini-stat" style="border-top:2px solid #c9a84c;">
+                <div class="val">Rp5,3jt</div>
+                <div class="label">Saldo Bersih</div>
+              </div>
+            </div>
+            <div class="mini-bars">
+              <div class="mini-bar in" style="height:65%"></div>
+              <div class="mini-bar out" style="height:40%; background:#c9a84c;"></div>
+              <div class="mini-bar in" style="height:75%"></div>
+              <div class="mini-bar out" style="height:35%; background:#c9a84c;"></div>
+              <div class="mini-bar in" style="height:85%"></div>
+              <div class="mini-bar out" style="height:38%; background:#c9a84c;"></div>
+            </div>
+            <div style="border-top:1px solid var(--border); margin-top:8px; padding-top:8px; display:flex; flex-direction:column; gap:4px;">
+              <div style="display:flex; justify-content:space-between; font-size:0.65rem; font-family:'Poppins',sans-serif; color:var(--text2);"><span>🍜 Makan Siang</span><span style="color:#ff6b6b;">-Rp 45.000</span></div>
+              <div style="display:flex; justify-content:space-between; font-size:0.65rem; font-family:'Poppins',sans-serif; color:var(--text2);"><span>💰 Gaji Bulanan</span><span style="color:var(--green);">+Rp 5.000.000</span></div>
+              <div style="display:flex; justify-content:space-between; font-size:0.65rem; font-family:'Poppins',sans-serif; color:var(--text2);"><span>⛽ Bensin</span><span style="color:#ff6b6b;">-Rp 80.000</span></div>
+            </div>
+          </div>
+          <a href="#" class="btn-price btn-price-outline" style="white-space:nowrap; padding:14px 28px;" onclick="openPayment('Dashboard Only — 1 Bulan','Rp 49.000'); return false;">Pilih Paket</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimoni">
+  <div class="section-inner">
+    <div class="section-label">Testimoni</div>
+    <h2 class="section-title">Dipercaya oleh <em>ribuan pengguna</em></h2>
+    <p class="section-sub">Bukan sekedar kata-kata — ini pengalaman nyata dari pengguna FinBot.</p>
+
+    <div class="testi-grid">
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"Akhirnya ada solusi yang tidak ribet. Tinggal chat di WA, semua langsung tercatat. Bulan pertama pakai FinBot, keuangan saya jauh lebih terkontrol!"</p>
+        <div class="testi-author">
+          <div class="testi-avatar">👩</div>
+          <div class="testi-author-info">
+            <strong>Anindita R.</strong>
+            <span>Marketing Manager, Jakarta</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"Sebagai freelancer, saya sering lupa catat pengeluaran. FinBot mengubah kebiasaan saya. Dashboard-nya jelas banget dan mudah dipahami."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">👨</div>
+          <div class="testi-author-info">
+            <strong>Bagas S.</strong>
+            <span>Desainer Freelance, Surabaya</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"Saya pakai untuk kebutuhan UMKM kecil-kecilan. Laporan bulanannya sangat membantu untuk evaluasi bisnis. Worth it banget!"</p>
+        <div class="testi-author">
+          <div class="testi-avatar">👩</div>
+          <div class="testi-author-info">
+            <strong>Mega P.</strong>
+            <span>Pemilik Usaha, Malang</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"Fitur ekspor Excel-nya keren banget! Saya bisa langsung kirim laporan keuangan ke akuntan tanpa repot. Sangat membantu bisnis online saya."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">👨</div>
+          <div class="testi-author-info">
+            <strong>Rizky A.</strong>
+            <span>Pemilik Toko Online, Bandung</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"Chart visualisasi arus kasnya bikin saya sadar pola pengeluaran yang nggak terasa. Dalam 2 bulan saya berhasil ngurangin pengeluaran sia-sia hampir 30%."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">👩</div>
+          <div class="testi-author-info">
+            <strong>Dewi K.</strong>
+            <span>Guru, Yogyakarta</span>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card reveal">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"Awalnya skeptis, tapi setelah coba langsung ketagihan. Tinggal chat 'beli bensin 50rb' dan semuanya tercatat otomatis. Simple banget, cocok buat yang malas ribet!"</p>
+        <div class="testi-author">
+          <div class="testi-avatar">👨</div>
+          <div class="testi-author-info">
+            <strong>Dani F.</strong>
+            <span>Karyawan Swasta, Semarang</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="section-inner">
+    <div class="faq-layout">
+      <div>
+        <div class="section-label">FAQ</div>
+        <h2 class="section-title">Pertanyaan yang <em>sering ditanyakan</em></h2>
+        <p style="color:var(--text2); font-size:0.88rem; line-height:1.7; font-weight:300; margin-top:16px;">
+          Tidak menemukan jawaban yang kamu cari? Hubungi tim FinBot via WhatsApp.
+        </p>
+      </div>
+      <div class="faq-list">
+        <details class="faq-item reveal">
+          <summary class="faq-question">Bagaimana cara kerja FinBot? <span class="faq-arrow">▾</span></summary>
+          <div class="faq-answer">Setelah berlangganan, kamu akan mendapatkan nomor WhatsApp FinBot. Simpan nomornya di kontak, lalu mulai chat seperti biasa — misalnya "makan siang 45rb" atau "gaji masuk 5 juta". FinBot akan otomatis mencatat dan menyimpan transaksimu ke dashboard. Semua data bisa diakses kapan saja melalui browser.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">Apakah data keuangan saya aman? <span class="faq-arrow">▾</span></summary>
+          <div class="faq-answer">Ya, data kamu tersimpan aman di server terenkripsi. Hanya kamu yang bisa mengakses datamu sendiri menggunakan akun yang sudah terdaftar. Kami tidak menjual atau membagikan data pengguna kepada pihak ketiga manapun.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">Apakah perlu install aplikasi tambahan? <span class="faq-arrow">▾</span></summary>
+          <div class="faq-answer">Tidak perlu. FinBot berjalan sepenuhnya melalui WhatsApp yang sudah ada di HP kamu, dan dashboard dapat diakses langsung dari browser HP, tablet, maupun laptop — tanpa install apapun.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">Format pesan apa yang diterima FinBot? <span class="faq-arrow">▾</span></summary>
+          <div class="faq-answer">FinBot memahami bahasa natural sehari-hari dalam Bahasa Indonesia. Kamu bisa ketik bebas seperti "beli kopi 25rb", "transfer ke teman 200ribu", atau "terima gaji 4.5 juta". FinBot akan otomatis mengenali jenis transaksi, nominal, dan kategorinya. Selain teks, FinBot juga bisa menerima foto struk belanja atau nota transaksi.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">Apa bedanya paket Lengkap dengan Dashboard Only? <span class="faq-arrow">▾</span></summary>
+          <div class="faq-answer">Paket Lengkap memungkinkan kamu mencatat transaksi langsung via chat WhatsApp secara otomatis. Paket Dashboard Only tidak menyertakan fitur bot WhatsApp, namun tetap memberikan akses penuh ke dashboard untuk input manual, visualisasi chart, ekspor laporan, dan target tabungan.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">Bisakah saya mengekspor data transaksi? <span class="faq-arrow">▾</span></summary>
+          <div class="faq-answer">Bisa. Semua paket FinBot mendukung ekspor laporan dalam format Excel/CSV maupun PDF. Kamu bisa mengunduh laporan bulanan atau seluruh riwayat transaksi kapan saja dari halaman dashboard.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">Bagaimana jika saya ingin berhenti berlangganan? <span class="faq-arrow">▾</span></summary>
+          <div class="faq-answer">Langganan FinBot tidak perpanjang otomatis. Setelah masa aktif habis, akses akan berhenti dengan sendirinya. Kamu bebas memilih untuk tidak lanjut tanpa dikenakan biaya apapun. Data transaksi tetap bisa kamu unduh sebelum masa aktif berakhir.</div>
+        </details>
+        <details class="faq-item reveal">
+          <summary class="faq-question">Apakah ada dukungan jika saya mengalami kendala? <span class="faq-arrow">▾</span></summary>
+          <div class="faq-answer">Ada. Tim FinBot siap membantu via WhatsApp jika kamu mengalami kendala teknis atau pertanyaan seputar penggunaan. Respons biasanya dalam hitungan jam pada hari kerja.</div>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTAGRAM -->
+<div class="instagram-section">
+  <div class="instagram-inner reveal">
+    <div class="instagram-text">
+      <h2>Ikuti Kami di <em>Instagram</em></h2>
+      <p>Dapatkan tips keuangan harian, update fitur terbaru FinBot, dan inspirasi finansial langsung di feed Instagram kamu.</p>
+    </div>
+    <a href="https://instagram.com/finbot.id" class="btn-instagram">@finbot.id — Ikuti Sekarang →</a>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="cta-inner">
+    <h2>Mulai kendalikan keuangan Anda <em>hari ini</em></h2>
+    <p>Pilih paket yang sesuai. Tidak perlu kartu kredit. Berhenti kapan saja.</p>
+    <div class="cta-actions">
+      <a href="#harga" class="btn-primary">Lihat Paket Harga →</a>
+      <a href="javascript:void(0)" onclick="openDashModal()" class="btn-secondary">Lihat Demo Dashboard →</a>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Dashboard Preview -->
+<div class="modal-overlay" id="dashModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeDashModal()">✕</button>
+    <div class="modal-title">Preview Dashboard Keuangan FinBot</div>
+    <div class="modal-sub">Visualisasi real-time · Chart interaktif · Riwayat transaksi lengkap</div>
+    <div class="dashboard-preview" style="margin:0;">
+      <div class="dash-header">
+        <h4>Dashboard Saya</h4>
+        <span class="dash-sync"><span class="online-dot"></span> Sinkron</span>
+      </div>
+      <div class="dash-stats">
+        <div class="dash-stat" style="border-top:2px solid var(--green);">
+          <div class="dash-stat-label">Pemasukan</div>
+          <div class="dash-stat-val green">Rp8,5jt</div>
+          <div class="dash-stat-badge">↑ +12%</div>
+        </div>
+        <div class="dash-stat" style="border-top:2px solid #ff6b6b;">
+          <div class="dash-stat-label">Pengeluaran</div>
+          <div class="dash-stat-val red">Rp3,2jt</div>
+          <div class="dash-stat-badge">↓ -5%</div>
+        </div>
+        <div class="dash-stat" style="border-top:2px solid #c9a84c;">
+          <div class="dash-stat-label">Saldo Bersih</div>
+          <div class="dash-stat-val green">Rp5,3jt</div>
+          <div class="dash-stat-badge">↑ Sehat</div>
+        </div>
+      </div>
+      <div class="dash-chart">
+        <div class="dash-chart-label">
+          <span>Arus Kas — 6 Bulan Terakhir</span>
+          <div class="dash-chart-legend">
+            <span><span class="legend-dot" style="background:var(--green)"></span> Pemasukan</span>
+            <span><span class="legend-dot" style="background:#c9a84c"></span> Pengeluaran</span>
+          </div>
+        </div>
+        <div class="chart-bars">
+          <div class="chart-group"><div class="chart-pair"><div class="bar in" style="height:60%"></div><div class="bar out" style="height:40%; background:#c9a84c;"></div></div><div class="chart-month">Nov</div></div>
+          <div class="chart-group"><div class="chart-pair"><div class="bar in" style="height:75%"></div><div class="bar out" style="height:45%; background:#c9a84c;"></div></div><div class="chart-month">Des</div></div>
+          <div class="chart-group"><div class="chart-pair"><div class="bar in" style="height:65%"></div><div class="bar out" style="height:50%; background:#c9a84c;"></div></div><div class="chart-month">Jan</div></div>
+          <div class="chart-group"><div class="chart-pair"><div class="bar in" style="height:80%"></div><div class="bar out" style="height:35%; background:#c9a84c;"></div></div><div class="chart-month">Feb</div></div>
+          <div class="chart-group"><div class="chart-pair"><div class="bar in" style="height:70%"></div><div class="bar out" style="height:42%; background:#c9a84c;"></div></div><div class="chart-month">Mar</div></div>
+          <div class="chart-group"><div class="chart-pair"><div class="bar in" style="height:90%"></div><div class="bar out" style="height:38%; background:#c9a84c;"></div></div><div class="chart-month">Apr</div></div>
+        </div>
+      </div>
+      <div class="dash-txns">
+        <div class="dash-txn"><div class="txn-name"><div class="txn-icon">🍜</div> Makan Siang</div><span class="txn-neg">-Rp 45.000</span></div>
+        <div class="dash-txn"><div class="txn-name"><div class="txn-icon">💰</div> Gaji Bulanan</div><span class="txn-pos">+Rp 5.000.000</span></div>
+        <div class="dash-txn"><div class="txn-name"><div class="txn-icon">⛽</div> Bensin</div><span class="txn-neg">-Rp 80.000</span></div>
+        <div class="dash-txn"><div class="txn-name"><div class="txn-icon">🛍️</div> Belanja Online</div><span class="txn-neg">-Rp 320.000</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <a href="#" class="footer-logo">
+      <svg width="26" height="26" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="34" height="34" rx="9" fill="#00e676"/>
+        <rect x="9" y="8" width="16" height="3" rx="1.5" fill="#000"/>
+        <rect x="9" y="15.5" width="11" height="3" rx="1.5" fill="#000"/>
+        <rect x="9" y="8" width="3" height="18" rx="1.5" fill="#000"/>
+      </svg>
+      FinBot
+    </a>
+    <span class="footer-copy">© 2026 FinBot. Hak cipta dilindungi.</span>
+    <div class="footer-links">
+      <a href="https://instagram.com/finbot.id">@finbot.id</a>
+      <a href="#">Hubungi Kami</a>
+      <a href="https://finbotai.site/dashboard.html">Dashboard →</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Modal
+  function openDashModal() {
+    document.getElementById('dashModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDashModal() {
+    document.getElementById('dashModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('dashModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDashModal();
+  });
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.classList.add('visible');
+        }, entry.target.dataset.delay || 0);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach((el, i) => {
+    observer.observe(el);
+  });
+
+  // Staggered children in grids
+  document.querySelectorAll('.features-grid, .testi-grid, .pricing-main-grid').forEach(grid => {
+    grid.querySelectorAll('.reveal').forEach((el, i) => {
+      el.style.transitionDelay = `${i * 0.08}s`;
+    });
+  });
+</script>
+<!-- PAYMENT MODAL -->
+<div id="payment-modal" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); overflow-y:auto;">
+  <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem;">
+    <div style="background:#0f1317; border:1px solid rgba(0,230,118,0.25); border-radius:20px; width:100%; max-width:520px; padding:2.5rem; position:relative;">
+
+      <button onclick="closePayment()" style="position:absolute; top:1.25rem; right:1.25rem; background:rgba(255,255,255,0.06); border:none; color:#e8e4dc; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center;">✕</button>
+
+      <div style="margin-bottom:2rem;">
+        <div style="font-family:'Poppins',sans-serif; font-size:0.7rem; color:#00e676; letter-spacing:0.12em; margin-bottom:0.5rem;">PEMBAYARAN</div>
+        <div style="font-family:'Poppins',sans-serif; font-size:1.8rem; font-weight:600;">Langganan FinBot <em style="color:#00e676;">PRO</em></div>
+      </div>
+
+      <div style="background:rgba(0,230,118,0.07); border:1px solid rgba(0,230,118,0.2); border-radius:12px; padding:1.25rem; margin-bottom:2rem;">
+        <div style="font-family:'Poppins',sans-serif; font-size:0.65rem; color:#6b7280; letter-spacing:0.1em; margin-bottom:0.75rem;">DETAIL PESANAN</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+          <span id="order-plan-name" style="font-size:0.85rem; color:#e8e4dc;">FinBot PRO — 1 Bulan</span>
+          <span id="order-plan-price" style="font-family:'Poppins',sans-serif; font-size:0.85rem; color:#e8e4dc;">Rp 29.000</span>
+        </div>
+        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.07); margin:0.75rem 0;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-family:'Poppins',sans-serif; font-size:0.72rem; color:#6b7280; letter-spacing:0.08em;">TOTAL</span>
+          <span id="order-total" style="font-family:'Poppins',sans-serif; font-size:1.6rem; font-weight:600; color:#00e676;">Rp 29.000</span>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:1rem; margin-bottom:2rem;">
+        <div style="font-family:'Poppins',sans-serif; font-size:0.65rem; color:#6b7280; letter-spacing:0.1em;">DATA PENGGUNA</div>
+
+        <div>
+          <label style="font-family:'Poppins',sans-serif; font-size:0.68rem; color:#6b7280; letter-spacing:0.06em; display:block; margin-bottom:0.4rem;">NAMA LENGKAP</label>
+          <input id="pay-name" type="text" placeholder="Contoh: Budi Santoso" style="width:100%; background:#141a1f; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:0.75rem 1rem; color:#e8e4dc; font-family:'Poppins',sans-serif; font-size:0.82rem; outline:none; transition:border-color 0.2s; box-sizing:border-box;" onfocus="this.style.borderColor='rgba(0,230,118,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+        </div>
+
+        <div>
+          <label style="font-family:'Poppins',sans-serif; font-size:0.68rem; color:#6b7280; letter-spacing:0.06em; display:block; margin-bottom:0.4rem;">EMAIL</label>
+          <input id="pay-email" type="email" placeholder="email@contoh.com" style="width:100%; background:#141a1f; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:0.75rem 1rem; color:#e8e4dc; font-family:'Poppins',sans-serif; font-size:0.82rem; outline:none; transition:border-color 0.2s; box-sizing:border-box;" onfocus="this.style.borderColor='rgba(0,230,118,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+        </div>
+
+        <div>
+          <label style="font-family:'Poppins',sans-serif; font-size:0.68rem; color:#6b7280; letter-spacing:0.06em; display:block; margin-bottom:0.4rem;">NOMOR WHATSAPP</label>
+          <input id="pay-wa" type="tel" placeholder="08xxxxxxxxxx" style="width:100%; background:#141a1f; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:0.75rem 1rem; color:#e8e4dc; font-family:'Poppins',sans-serif; font-size:0.82rem; outline:none; transition:border-color 0.2s; box-sizing:border-box;" onfocus="this.style.borderColor='rgba(0,230,118,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+        </div>
+
+        <div>
+          <label style="font-family:'Poppins',sans-serif; font-size:0.68rem; color:#6b7280; letter-spacing:0.06em; display:block; margin-bottom:0.4rem;">METODE PEMBAYARAN</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem;">
+            <div class="pay-method active" onclick="selectMethod(this)" style="border:1px solid rgba(0,230,118,0.5); background:rgba(0,230,118,0.08); border-radius:8px; padding:0.7rem; text-align:center; cursor:pointer; transition:all 0.2s;">
+              <div style="font-size:1.2rem;">🏦</div>
+              <div style="font-family:'Poppins',sans-serif; font-size:0.65rem; color:#e8e4dc; margin-top:0.25rem;">Transfer Bank</div>
+            </div>
+            <div class="pay-method" onclick="selectMethod(this)" style="border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:0.7rem; text-align:center; cursor:pointer; transition:all 0.2s;">
+              <div style="font-size:1.2rem;">💳</div>
+              <div style="font-family:'Poppins',sans-serif; font-size:0.65rem; color:#e8e4dc; margin-top:0.25rem;">QRIS</div>
+            </div>
+            <div class="pay-method" onclick="selectMethod(this)" style="border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:0.7rem; text-align:center; cursor:pointer; transition:all 0.2s;">
+              <div style="font-size:1.2rem;">🟢</div>
+              <div style="font-family:'Poppins',sans-serif; font-size:0.65rem; color:#e8e4dc; margin-top:0.25rem;">GoPay</div>
+            </div>
+            <div class="pay-method" onclick="selectMethod(this)" style="border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:0.7rem; text-align:center; cursor:pointer; transition:all 0.2s;">
+              <div style="font-size:1.2rem;">🔵</div>
+              <div style="font-family:'Poppins',sans-serif; font-size:0.65rem; color:#e8e4dc; margin-top:0.25rem;">OVO</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button id="pay-submit-btn" onclick="submitPayment()" style="width:100%; background:#00e676; color:#000; padding:1rem; border:none; border-radius:10px; font-family:'Poppins',sans-serif; font-size:0.95rem; font-weight:700; letter-spacing:0.05em; cursor:pointer; transition:transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 40px rgba(0,230,118,0.35)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='none'">
+        Bayar Sekarang — <span id="pay-btn-price">Rp 29.000</span>
+      </button>
+
+      <p style="font-family:'Poppins',sans-serif; font-size:0.65rem; color:#6b7280; text-align:center; margin-top:1rem; line-height:1.6;">🔒 Transaksi aman & terenkripsi · Berhenti kapan saja</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openPayment(planName, planPrice) {
+    planName = planName || 'FinBot PRO — 1 Bulan';
+    planPrice = planPrice || 'Rp 29.000';
+    document.getElementById('order-plan-name').textContent = planName;
+    document.getElementById('order-plan-price').textContent = planPrice;
+    document.getElementById('order-total').textContent = planPrice;
+    document.getElementById('pay-btn-price').textContent = planPrice;
+    document.getElementById('payment-modal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+  function closePayment() {
+    document.getElementById('payment-modal').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  function selectMethod(el) {
+    document.querySelectorAll('.pay-method').forEach(m => {
+      m.style.borderColor = 'rgba(255,255,255,0.1)';
+      m.style.background = 'transparent';
+    });
+    el.style.borderColor = 'rgba(0,230,118,0.5)';
+    el.style.background = 'rgba(0,230,118,0.08)';
+  }
+  async function submitPayment() {
+    const name = document.getElementById('pay-name').value.trim();
+    const email = document.getElementById('pay-email').value.trim();
+    const wa = document.getElementById('pay-wa').value.trim();
+    if (!name || !email || !wa) {
+      alert('Mohon lengkapi semua data pengguna terlebih dahulu.');
+      return;
+    }
+    const btn = document.getElementById('pay-submit-btn');
+    const originalText = btn.innerHTML;
+    try {
+      btn.innerHTML = 'Memproses...';
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      const response = await fetch('https://finbot-server-production-8a23.up.railway.app/payment/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, whatsapp: wa })
+      });
+      const data = await response.json();
+      if (data.redirect_url) {
+        window.location.href = data.redirect_url;
+      } else {
+        alert('Gagal membuat transaksi: ' + (data.error || 'Coba lagi.'));
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+    } catch (err) {
+      alert('Koneksi gagal. Periksa internet kamu.\n' + err.message);
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  }
+  document.getElementById('payment-modal').addEventListener('click', function(e) {
+    if (e.target === this) closePayment();
+  });
+</script>
+
+</body>
+</html>
